@@ -16,14 +16,14 @@ namespace EbenezerConnectApi.Controllers
             _pessoaService = pessoaService;
         }
 
-        [HttpGet]
+        [HttpGet("ObterTodasPessoas")]
         public async Task<ActionResult<List<Pessoa>>> ObterTodasPessoas()
         {
             var pessoas = await _pessoaService.ObterTodasPessoas();
             return Ok(pessoas);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("ObterPessoaPorId/{id}")]
         public async Task<ActionResult<Pessoa>> ObterPessoaPorId(int id)
         {
             var pessoa = await _pessoaService.ObterPessoaPorId(id);
@@ -34,14 +34,14 @@ namespace EbenezerConnectApi.Controllers
             return Ok(pessoa);
         }
 
-        [HttpPost]
+        [HttpPost("AdicionarPessoa")]
         public async Task<ActionResult> AdicionarPessoa([FromBody] Pessoa pessoa)
         {
             await _pessoaService.AdicionarPessoa(pessoa);
             return CreatedAtAction(nameof(ObterPessoaPorId), new { id = pessoa.Id }, pessoa);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("AtualizarPessoa/{id}")]
         public async Task<ActionResult> AtualizarPessoa(int id, [FromBody] Pessoa pessoa)
         {
             if (id != pessoa.Id)
@@ -53,7 +53,7 @@ namespace EbenezerConnectApi.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("RemoverPessoa/{id}")]
         public async Task<ActionResult> RemoverPessoa(int id)
         {
             await _pessoaService.RemoverPessoa(id);
