@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EbenezerConnectApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+61ae41bb2a1dc6cb8cba4c4bdbad8c9a8e4b868a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+44abcc54a11eb0b840187d942a58c6827426a22e")]
 [assembly: System.Reflection.AssemblyProductAttribute("EbenezerConnectApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EbenezerConnectApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
