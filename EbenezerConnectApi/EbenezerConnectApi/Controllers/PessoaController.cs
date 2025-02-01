@@ -26,6 +26,7 @@ namespace EbenezerConnectApi.Controllers
         [HttpGet("ObterPessoaPorId/{id}")]
         public async Task<ActionResult<Pessoa>> ObterPessoaPorId(int id)
         {
+
             var pessoa = await _pessoaService.ObterPessoaPorId(id);
             if (pessoa == null)
             {
