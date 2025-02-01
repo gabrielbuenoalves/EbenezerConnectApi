@@ -1,5 +1,22 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
+# Ignorar pasta .vs do Visual Studio
+.vs/
+
+# Ignorar pastas de build e binários
+bin/
+obj/
+
+# Ignorar arquivos de usuário do Visual Studio
+*.user
+*.suo
+
+# Ignorar logs e dependências
+logs/
+node_modules/
+
+# Ignorar arquivos de configuração local
+appsettings.Development.json
+
+# Ignorar arquivos de cache do Rider
+.idea/
 
 /EbenezerConnectApi/.vs/EbenezerConnectApi/FileContentIndex
