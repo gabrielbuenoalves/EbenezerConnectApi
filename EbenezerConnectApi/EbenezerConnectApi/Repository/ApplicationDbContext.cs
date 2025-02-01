@@ -10,7 +10,7 @@ namespace EbenezerConnectApi.Repository
         {
         }
         public DbSet<Pessoa> Pessoa { get; set; } // Tabela Pessoas
-
+        public DbSet<TransacaoCantina> TransacaoCantina { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
