@@ -37,5 +37,9 @@ namespace EbenezerConnectApi.Services
         {
             await _pessoaRepository.RemoverPessoa(id);
         }
+        public async Task<Pessoa> VerificarSaldoPessoa(int id, string cpf)
+        {
+            return await _pessoaRepository.VerificarSaldoPessoa(id, cpf);
+        }
     }
 }

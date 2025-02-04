@@ -34,5 +34,7 @@ namespace EbenezerConnectApi.Services.Interfaces
         /// </summary>
         /// <param name="id">O ID da pessoa a ser removida.</param>
         Task RemoverPessoa(int id);
+
+        Task<Pessoa> VerificarSaldoPessoa(int id, string cpf);
     }
 }

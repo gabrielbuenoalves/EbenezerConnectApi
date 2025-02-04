@@ -10,6 +10,7 @@ namespace EbenezerConnectApi.Repository.Interfaces
         Task AdicionarPessoa(Pessoa pessoa);
         Task AtualizarPessoa(Pessoa pessoa);
         Task RemoverPessoa(int id);
-        
+        Task<Pessoa> VerificarSaldoPessoa(int id, string pessoa);
+
     }
 }

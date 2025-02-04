@@ -17,7 +17,7 @@ namespace EbenezerConnectApi.Models.Entities
 
         [Required]
         [Column(TypeName = "decimal(18, 2)")]
-        public decimal Valor { get; set; }
+        public double Valor { get; set; }
 
         [MaxLength(255)]
         public string Descricao { get; set; }

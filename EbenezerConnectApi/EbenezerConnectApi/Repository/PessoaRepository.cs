@@ -44,5 +44,10 @@ namespace EbenezerConnectApi.Repository
                 await _context.SaveChangesAsync();
             }
         }
+        public async Task<Pessoa> VerificarSaldoPessoa(int id,string cpf)
+        {
+            return await _context.Pessoa.FindAsync(id, cpf);
+        }
+
     }
 }

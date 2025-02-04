@@ -12,9 +12,12 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-//Injeções de Dependencia
+//Injeções de Dependencia Repository
 builder.Services.AddScoped<IPessoaRepository, PessoaRepository>();
+builder.Services.AddScoped<ITransacaoCantinaRepository, TransacaoCantinaRepository>();
+//Injeção de Dependencia Service
 builder.Services.AddScoped<IPessoaService, PessoaService>();
+builder.Services.AddScoped<ITransacaoCantinaService, TransacaoCantinaService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
