@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EbenezerConnectApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250201194628_CriandoBaseDeDados")]
-    partial class CriandoBaseDeDados
+    [Migration("20250405075617_EmailConfirmacao")]
+    partial class EmailConfirmacao
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,31 @@ namespace EbenezerConnectApi.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("EbenezerConnectApi.Models.Entities.EmailConfirmacao", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ExpiraEm")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PessoaId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PessoaId");
+
+                    b.ToTable("EmailConfirmacao");
+                });
 
             modelBuilder.Entity("EbenezerConnectApi.Models.Entities.Pessoa", b =>
                 {
@@ -37,6 +62,14 @@ namespace EbenezerConnectApi.Migrations
                         .IsRequired()
                         .HasMaxLength(11)
                         .HasColumnType("varchar(11)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("EmailConfirmado")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Funcao")
                         .IsRequired()
@@ -52,19 +85,45 @@ namespace EbenezerConnectApi.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("Quarto")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int?>("QuartoId")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("Saldo")
                         .HasColumnType("decimal(18, 2)");
+
+                    b.Property<string>("SenhaHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Cpf")
                         .IsUnique();
 
+                    b.HasIndex("QuartoId");
+
                     b.ToTable("Pessoa");
+                });
+
+            modelBuilder.Entity("EbenezerConnectApi.Models.Entities.Quarto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Capacidade")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Quarto");
                 });
 
             modelBuilder.Entity("EbenezerConnectApi.Models.Entities.TransacaoCantina", b =>
@@ -101,6 +160,26 @@ namespace EbenezerConnectApi.Migrations
                     b.ToTable("TransacaoCantina");
                 });
 
+            modelBuilder.Entity("EbenezerConnectApi.Models.Entities.EmailConfirmacao", b =>
+                {
+                    b.HasOne("EbenezerConnectApi.Models.Entities.Pessoa", "Pessoa")
+                        .WithMany()
+                        .HasForeignKey("PessoaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pessoa");
+                });
+
+            modelBuilder.Entity("EbenezerConnectApi.Models.Entities.Pessoa", b =>
+                {
+                    b.HasOne("EbenezerConnectApi.Models.Entities.Quarto", "Quarto")
+                        .WithMany("Pessoas")
+                        .HasForeignKey("QuartoId");
+
+                    b.Navigation("Quarto");
+                });
+
             modelBuilder.Entity("EbenezerConnectApi.Models.Entities.TransacaoCantina", b =>
                 {
                     b.HasOne("EbenezerConnectApi.Models.Entities.Pessoa", "Pessoa")
@@ -110,6 +189,11 @@ namespace EbenezerConnectApi.Migrations
                         .IsRequired();
 
                     b.Navigation("Pessoa");
+                });
+
+            modelBuilder.Entity("EbenezerConnectApi.Models.Entities.Quarto", b =>
+                {
+                    b.Navigation("Pessoas");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,6 +1,9 @@
-﻿using EbenezerConnectApi.Models.Entities;
+﻿using AutoMapper;
+using EbenezerConnectApi.Models.Dtos;
+using EbenezerConnectApi.Models.Entities;
 using EbenezerConnectApi.Services;
 using EbenezerConnectApi.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EbenezerConnectApi.Controllers
@@ -10,52 +13,59 @@ namespace EbenezerConnectApi.Controllers
     public class PessoaController : ControllerBase
     {
         private readonly IPessoaService _pessoaService;
+        private readonly IMapper _mapper;
 
-        public PessoaController(IPessoaService pessoaService)
+        public PessoaController(IPessoaService pessoaService, IMapper mapper)
         {
             _pessoaService = pessoaService;
+            _mapper = mapper;
         }
 
-        [HttpGet("ObterTodasPessoas")]
-        public async Task<ActionResult<List<Pessoa>>> ObterTodasPessoas()
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> ObterTodos()
         {
-            var pessoas = await _pessoaService.ObterTodasPessoas();
-            return Ok(pessoas);
+            var pessoas = await _pessoaService.ListarTodas();
+            var dtos = _mapper.Map<List<PessoaResponseDto>>(pessoas);
+            return Ok(dtos);
         }
 
-        [HttpGet("ObterPessoaPorId/{id}")]
-        public async Task<ActionResult<Pessoa>> ObterPessoaPorId(int id)
+        [Authorize]
+        [HttpGet("funcao/{funcao}")]
+        public async Task<IActionResult> ListarPorFuncao(string funcao)
         {
+            var pessoas = await _pessoaService.ListarPorFuncao(funcao);
+            var dtos = _mapper.Map<List<PessoaResponseDto>>(pessoas);
+            return Ok(dtos);
+        }
 
-            var pessoa = await _pessoaService.ObterPessoaPorId(id);
+        [Authorize]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> ObterPorId(int id)
+        {
+            var pessoa = await _pessoaService.ObterPorId(id);
             if (pessoa == null)
-            {
                 return NotFound();
-            }
-            return Ok(pessoa);
+
+            return Ok(_mapper.Map<PessoaResponseDto>(pessoa));
         }
 
-        [HttpPost("AdicionarPessoa")]
-        public async Task<ActionResult> AdicionarPessoa([FromBody] Pessoa pessoa)
+        [Authorize]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Atualizar(int id, [FromBody] AtualizarPessoaDto dto)
         {
-            await _pessoaService.AdicionarPessoa(pessoa);
-            return CreatedAtAction(nameof(ObterPessoaPorId), new { id = pessoa.Id }, pessoa);
-        }
+            var pessoa = await _pessoaService.ObterPorId(id);
+            if (pessoa == null)
+                return NotFound();
 
-        [HttpPut("AtualizarPessoa/{id}")]
-        public async Task<ActionResult> AtualizarPessoa(int id, [FromBody] Pessoa pessoa)
-        {
-            if (id != pessoa.Id)
-            {
-                return BadRequest();
-            }
-
+            _mapper.Map(dto, pessoa);
             await _pessoaService.AtualizarPessoa(pessoa);
             return NoContent();
         }
 
-        [HttpDelete("RemoverPessoa/{id}")]
-        public async Task<ActionResult> RemoverPessoa(int id)
+        [Authorize]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Remover(int id)
         {
             await _pessoaService.RemoverPessoa(id);
             return NoContent();

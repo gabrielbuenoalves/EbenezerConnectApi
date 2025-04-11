@@ -4,6 +4,7 @@ using EbenezerConnectApi.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EbenezerConnectApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250405071404_EmailAdd")]
+    partial class EmailAdd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,31 +24,6 @@ namespace EbenezerConnectApi.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("EbenezerConnectApi.Models.Entities.EmailConfirmacao", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ExpiraEm")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("PessoaId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PessoaId");
-
-                    b.ToTable("EmailConfirmacao");
-                });
 
             modelBuilder.Entity("EbenezerConnectApi.Models.Entities.Pessoa", b =>
                 {
@@ -155,17 +133,6 @@ namespace EbenezerConnectApi.Migrations
                     b.HasIndex("PessoaId");
 
                     b.ToTable("TransacaoCantina");
-                });
-
-            modelBuilder.Entity("EbenezerConnectApi.Models.Entities.EmailConfirmacao", b =>
-                {
-                    b.HasOne("EbenezerConnectApi.Models.Entities.Pessoa", "Pessoa")
-                        .WithMany()
-                        .HasForeignKey("PessoaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Pessoa");
                 });
 
             modelBuilder.Entity("EbenezerConnectApi.Models.Entities.Pessoa", b =>

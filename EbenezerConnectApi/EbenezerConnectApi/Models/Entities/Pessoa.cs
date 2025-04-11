@@ -6,31 +6,43 @@ namespace EbenezerConnectApi.Models.Entities
 {
     public class Pessoa
     {
-        [Key] // Define a propriedade como chave primária
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // Auto-incremento
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        [Required] // Not null
-        [StringLength(50)] // Define o tamanho máximo da string
-        public string Funcao { get; set; } // "acampante" ou "conselheiro"
+        [Required]
+        [StringLength(50)]
+        public string Funcao { get; set; } // "acampante", "conselheiro", "admin"
 
-        [Required] // Not null
-        [StringLength(100)] // Define o tamanho máximo da string
+        [Required]
+        [StringLength(100)]
         public string Nome { get; set; }
 
-        [Required] // Not null
-        [StringLength(11)] // CPF com 11 caracteres
-        [Column(TypeName = "varchar(11)")] // Define o tipo da coluna no banco de dados
+        [Required]
+        [StringLength(11)]
+        [Column(TypeName = "varchar(11)")]
         public string Cpf { get; set; }
 
-        [StringLength(50)] // Define o tamanho máximo da string
-        public string? Quarto { get; set; } // Pode ser nulo
+        [Required]
+        [EmailAddress]
+        [StringLength(100)]
+        public string Email { get; set; } // Adicionado para autenticação
 
-        [StringLength(100)] // Define o tamanho máximo da string
-        public string? Igreja { get; set; } // Pode ser nulo
+        [Required]
+        public string SenhaHash { get; set; } // Hash da senha, não armazenar senha pura!
 
-        [Required] // Not null
-        [Column(TypeName = "decimal(18, 2)")] // Define o tipo da coluna no banco de dados
-        public double Saldo { get; set; } = 0; // Valor padrão é 0
+        [StringLength(100)]
+        public string? Igreja { get; set; }
+
+        [Required]
+        [Column(TypeName = "decimal(18, 2)")]
+        public double Saldo { get; set; } = 0;
+
+        // Ligação com quarto (opcional)
+        public int? QuartoId { get; set; }
+        public Quarto? Quarto { get; set; }
+
+        public bool EmailConfirmado { get; set; } = false;
+
     }
 }

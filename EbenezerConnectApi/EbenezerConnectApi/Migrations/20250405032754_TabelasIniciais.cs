@@ -6,11 +6,25 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace EbenezerConnectApi.Migrations
 {
     /// <inheritdoc />
-    public partial class CriandoBaseDeDados : Migration
+    public partial class TabelasIniciais : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "Quarto",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nome = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Capacidade = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Quarto", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Pessoa",
                 columns: table => new
@@ -20,13 +34,20 @@ namespace EbenezerConnectApi.Migrations
                     Funcao = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Nome = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Cpf = table.Column<string>(type: "varchar(11)", maxLength: 11, nullable: false),
-                    Quarto = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    SenhaHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Igreja = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    Saldo = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    Saldo = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    QuartoId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Pessoa", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Pessoa_Quarto_QuartoId",
+                        column: x => x.QuartoId,
+                        principalTable: "Quarto",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -59,6 +80,11 @@ namespace EbenezerConnectApi.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Pessoa_QuartoId",
+                table: "Pessoa",
+                column: "QuartoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TransacaoCantina_PessoaId",
                 table: "TransacaoCantina",
                 column: "PessoaId");
@@ -72,6 +98,9 @@ namespace EbenezerConnectApi.Migrations
 
             migrationBuilder.DropTable(
                 name: "Pessoa");
+
+            migrationBuilder.DropTable(
+                name: "Quarto");
         }
     }
 }

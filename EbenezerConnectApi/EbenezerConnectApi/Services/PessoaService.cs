@@ -4,6 +4,10 @@ using EbenezerConnectApi.Services.Interfaces;
 
 namespace EbenezerConnectApi.Services
 {
+    using EbenezerConnectApi.Models.Entities;
+    using EbenezerConnectApi.Repository.Interfaces;
+    using EbenezerConnectApi.Services.Interfaces;
+
     public class PessoaService : IPessoaService
     {
         private readonly IPessoaRepository _pessoaRepository;
@@ -13,19 +17,19 @@ namespace EbenezerConnectApi.Services
             _pessoaRepository = pessoaRepository;
         }
 
-        public async Task<List<Pessoa>> ObterTodasPessoas()
+        public async Task<List<Pessoa>> ListarTodas()
         {
             return await _pessoaRepository.ObterTodasPessoas();
         }
 
-        public async Task<Pessoa> ObterPessoaPorId(int id)
+        public async Task<List<Pessoa>> ListarPorFuncao(string funcao)
         {
-            return await _pessoaRepository.ObterPorId(id);
+            return await _pessoaRepository.ObterPorFuncao(funcao);
         }
 
-        public async Task AdicionarPessoa(Pessoa pessoa)
+        public async Task<Pessoa?> ObterPorId(int id)
         {
-            await _pessoaRepository.AdicionarPessoa(pessoa);
+            return await _pessoaRepository.ObterPorId(id);
         }
 
         public async Task AtualizarPessoa(Pessoa pessoa)
@@ -36,10 +40,6 @@ namespace EbenezerConnectApi.Services
         public async Task RemoverPessoa(int id)
         {
             await _pessoaRepository.RemoverPessoa(id);
-        }
-        public async Task<Pessoa> VerificarSaldoPessoa(int id, string cpf)
-        {
-            return await _pessoaRepository.VerificarSaldoPessoa(id, cpf);
         }
     }
 }

@@ -13,6 +13,35 @@ namespace EbenezerConnectApi.Repository
             _context = context;
         }
 
+        public async Task<Pessoa?> BuscarPorEmail(string email)
+        {
+            return await _context.Pessoa
+                .Include(p => p.Quarto)
+                .FirstOrDefaultAsync(p => p.Email == email);
+        }
+
+        public async Task<Pessoa?> ObterPorId(int id)
+        {
+            return await _context.Pessoa
+                .Include(p => p.Quarto)
+                .FirstOrDefaultAsync(p => p.Id == id);
+        }
+
+        public async Task<List<Pessoa>> ObterTodasPessoas()
+        {
+            return await _context.Pessoa
+                .Include(p => p.Quarto)
+                .ToListAsync();
+        }
+
+        public async Task<List<Pessoa>> ObterPorFuncao(string funcao)
+        {
+            return await _context.Pessoa
+                .Where(p => p.Funcao.ToLower() == funcao.ToLower())
+                .Include(p => p.Quarto)
+                .ToListAsync();
+        }
+
         public async Task AdicionarPessoa(Pessoa pessoa)
         {
             _context.Pessoa.Add(pessoa);
@@ -25,16 +54,6 @@ namespace EbenezerConnectApi.Repository
             await _context.SaveChangesAsync();
         }
 
-        public async Task<Pessoa> ObterPorId(int id)
-        {
-            return await _context.Pessoa.FindAsync(id);
-        }
-
-        public async Task<List<Pessoa>> ObterTodasPessoas()
-        {
-            return await _context.Pessoa.ToListAsync();
-        }
-
         public async Task RemoverPessoa(int id)
         {
             var pessoa = await _context.Pessoa.FindAsync(id);
@@ -44,10 +63,11 @@ namespace EbenezerConnectApi.Repository
                 await _context.SaveChangesAsync();
             }
         }
-        public async Task<Pessoa> VerificarSaldoPessoa(int id,string cpf)
-        {
-            return await _context.Pessoa.FindAsync(id, cpf);
-        }
 
+        public async Task<Pessoa?> VerificarSaldoPessoa(int id, string cpf)
+        {
+            return await _context.Pessoa
+                .FirstOrDefaultAsync(p => p.Id == id && p.Cpf == cpf);
+        }
     }
 }
