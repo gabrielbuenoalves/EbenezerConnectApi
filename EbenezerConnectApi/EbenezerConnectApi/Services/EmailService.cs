@@ -12,6 +12,32 @@ namespace EbenezerConnectApi.Services
         {
             _configuration = configuration;
         }
+        public async Task EnviarSenhaTemporaria(Pessoa pessoa, string senhaTemp)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Ebenezer Camp", "no-reply@ebenezer.local"));
+            message.To.Add(MailboxAddress.Parse(pessoa.Email));
+            message.Subject = "Sua senha temporária";
+
+            message.Body = new TextPart("plain")
+            {
+                Text = $@"Olá {pessoa.Nome},
+
+                Você solicitou a recuperação de senha. 
+                Use a senha temporária abaixo para redefinir sua senha:
+
+                Senha temporária: {senhaTemp}
+
+                Após usá-la, ela será invalidada.
+
+                Equipe Ebenezer Camp"
+            };
+
+            using var client = new SmtpClient();
+            await client.ConnectAsync("localhost", 25, false);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+        }
 
         public async Task EnviarEmailConfirmacao(Pessoa pessoa, string token)
         {
@@ -26,9 +52,8 @@ namespace EbenezerConnectApi.Services
             message.Body = new TextPart("plain")
             {
                 Text = $@"Olá, {pessoa.Nome}!
-
-Clique no link para confirmar seu e-mail:
-{link}"
+                Clique no link para confirmar seu e-mail:
+                {link}"
             };
 
             using var client = new SmtpClient();

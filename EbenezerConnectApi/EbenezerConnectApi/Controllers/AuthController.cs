@@ -18,19 +18,23 @@ namespace EbenezerConnectApi.Controllers
         private readonly IEmailConfirmacaoRepository _emailConfirmacaoRepository;
         private readonly IJwtService _jwtService;
         private readonly IMapper _mapper;
+        private readonly EmailService _emailService;
+
 
         public AuthController(
             IUsuarioService usuarioService,
             IPessoaRepository pessoaRepository,
             IEmailConfirmacaoRepository emailConfirmacaoRepository,
             IJwtService jwtService,
-            IMapper mapper)
+            IMapper mapper,
+            EmailService emailService)
         {
             _usuarioService = usuarioService;
             _pessoaRepository = pessoaRepository;
             _emailConfirmacaoRepository = emailConfirmacaoRepository;
             _jwtService = jwtService;
             _mapper = mapper;
+            _emailService = emailService;
         }
 
         [AllowAnonymous]
@@ -54,7 +58,7 @@ namespace EbenezerConnectApi.Controllers
             if (usuario == null)
                 return Unauthorized("Credenciais inválidas.");
 
-            if (!usuario.EmailConfirmado)
+            if (!usuario.EmailConfirmado    )
                 return Unauthorized("E-mail ainda não confirmado. Verifique sua caixa de entrada.");
 
             if (!BCrypt.Net.BCrypt.Verify(dto.Senha, usuario.SenhaHash))
@@ -65,6 +69,41 @@ namespace EbenezerConnectApi.Controllers
             response.Token = token;
 
             return Ok(response);
+        }
+        [AllowAnonymous]
+        [HttpPost("esqueci-senha")]
+        public async Task<IActionResult> EsqueciSenha([FromBody] EmailDto dto)
+        {
+            var pessoa = await _pessoaRepository.BuscarPorEmail(dto.Email);
+            if (pessoa == null)
+                return BadRequest("Usuário não encontrado.");
+
+            var senhaTemp = Guid.NewGuid().ToString().Substring(0, 8);
+            pessoa.SenhaTemporariaHash = BCrypt.Net.BCrypt.HashPassword(senhaTemp);
+            await _pessoaRepository.AtualizarPessoa(pessoa);
+
+            await _emailService.EnviarSenhaTemporaria(pessoa, senhaTemp);
+
+            return Ok("Senha temporária enviada ao e-mail.");
+        }
+        [AllowAnonymous]
+        [HttpPost("redefinir-senha")]
+        public async Task<IActionResult> RedefinirSenha([FromBody] RedefinirSenhaDto dto)
+        {
+            var pessoa = await _pessoaRepository.BuscarPorEmail(dto.Email);
+            if (pessoa == null)
+                return BadRequest("Usuário não encontrado.");
+
+            if (string.IsNullOrEmpty(pessoa.SenhaTemporariaHash) ||
+                !BCrypt.Net.BCrypt.Verify(dto.SenhaTemporaria, pessoa.SenhaTemporariaHash))
+                return BadRequest("Senha temporária inválida.");
+
+            pessoa.SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.NovaSenha);
+            pessoa.SenhaTemporariaHash = null;
+
+            await _pessoaRepository.AtualizarPessoa(pessoa);
+
+            return Ok("Senha redefinida com sucesso.");
         }
 
         [AllowAnonymous]

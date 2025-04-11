@@ -41,7 +41,7 @@ namespace EbenezerConnectApi.Models.Entities
         // Ligação com quarto (opcional)
         public int? QuartoId { get; set; }
         public Quarto? Quarto { get; set; }
-
+        public string? SenhaTemporariaHash { get; set; }
         public bool EmailConfirmado { get; set; } = false;
 
     }
