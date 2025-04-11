@@ -8,8 +8,7 @@
         public string ConfirmarSenha { get; set; } = string.Empty;
         public string Funcao { get; set; } = string.Empty;
         public string Cpf { get; set; } = string.Empty;
-        public string? Igreja { get; set; }
-        public int? QuartoId { get; set; }
+        public string Telefone { get; set; } = string.Empty;
     }
 
 
