@@ -70,22 +70,22 @@ namespace EbenezerConnectApi.Controllers
 
             return Ok(response);
         }
-        [AllowAnonymous]
-        [HttpPost("esqueci-senha")]
-        public async Task<IActionResult> EsqueciSenha([FromBody] EmailDto dto)
-        {
-            var pessoa = await _pessoaRepository.BuscarPorEmail(dto.Email);
-            if (pessoa == null)
-                return BadRequest("Usuário não encontrado.");
+        //[AllowAnonymous]
+        //[HttpPost("esqueci-senha")]
+        //public async Task<IActionResult> EsqueciSenha([FromBody] EmailDto dto)
+        //{
+        //    var pessoa = await _pessoaRepository.BuscarPorEmail(dto.Email);
+        //    if (pessoa == null)
+        //        return BadRequest("Usuário não encontrado.");
 
-            var senhaTemp = Guid.NewGuid().ToString().Substring(0, 8);
-            pessoa.SenhaTemporariaHash = BCrypt.Net.BCrypt.HashPassword(senhaTemp);
-            await _pessoaRepository.AtualizarPessoa(pessoa);
+        //    var senhaTemp = Guid.NewGuid().ToString().Substring(0, 8);
+        //    pessoa.SenhaTemporariaHash = BCrypt.Net.BCrypt.HashPassword(senhaTemp);
+        //    await _pessoaRepository.AtualizarPessoa(pessoa);
 
-            await _emailService.EnviarSenhaTemporaria(pessoa, senhaTemp);
+        //    await _emailService.EnviarSenhaTemporaria(pessoa, senhaTemp);
 
-            return Ok("Senha temporária enviada ao e-mail.");
-        }
+        //    return Ok("Senha temporária enviada ao e-mail.");
+        //}
         [AllowAnonymous]
         [HttpPost("redefinir-senha")]
         public async Task<IActionResult> RedefinirSenha([FromBody] RedefinirSenhaDto dto)

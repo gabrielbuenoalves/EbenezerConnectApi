@@ -1,65 +1,49 @@
 ﻿using EbenezerConnectApi.Models.Entities;
 using MailKit.Net.Smtp;
+using MailKit.Security;
 using MimeKit;
 
-namespace EbenezerConnectApi.Services
+public class EmailService
 {
-    public class EmailService
+    private readonly IConfiguration _configuration;
+
+    public EmailService(IConfiguration configuration)
     {
-        private readonly IConfiguration _configuration;
+        _configuration = configuration;
+    }
 
-        public EmailService(IConfiguration configuration)
+    public async Task EnviarEmailConfirmacao(Pessoa pessoa, string token)
+    {
+        var baseUrl = _configuration["AppSettings:BaseUrl"]
+                      ?? throw new InvalidOperationException("BaseUrl não configurado.");
+        var emailFrom = _configuration["EmailSettings:From"]
+                        ?? throw new InvalidOperationException("Remetente não configurado.");
+        var emailPassword = _configuration["EmailSettings:Password"]
+                            ?? throw new InvalidOperationException("Senha do email não configurada.");
+
+        var link = $"{baseUrl}/api/auth/confirmar-email?token={token}";
+
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress("Ebenezer Camp", emailFrom));
+        message.To.Add(MailboxAddress.Parse(pessoa.Email));
+        message.Subject = "Confirme seu e-mail";
+
+        message.Body = new TextPart("plain")
         {
-            _configuration = configuration;
-        }
-        public async Task EnviarSenhaTemporaria(Pessoa pessoa, string senhaTemp)
-        {
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Ebenezer Camp", "no-reply@ebenezer.local"));
-            message.To.Add(MailboxAddress.Parse(pessoa.Email));
-            message.Subject = "Sua senha temporária";
+            Text = $@"Olá {pessoa.Nome},
 
-            message.Body = new TextPart("plain")
-            {
-                Text = $@"Olá {pessoa.Nome},
+Clique no link abaixo para confirmar seu e-mail:
+{link}
 
-                Você solicitou a recuperação de senha. 
-                Use a senha temporária abaixo para redefinir sua senha:
+Caso não tenha se cadastrado, ignore este e-mail.
 
-                Senha temporária: {senhaTemp}
+Equipe Ebenezer Camp"
+        };
 
-                Após usá-la, ela será invalidada.
-
-                Equipe Ebenezer Camp"
-            };
-
-            using var client = new SmtpClient();
-            await client.ConnectAsync("localhost", 25, false);
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
-        }
-
-        public async Task EnviarEmailConfirmacao(Pessoa pessoa, string token)
-        {
-            var baseUrl = _configuration["AppSettings:BaseUrl"];
-            var link = $"{baseUrl}/api/auth/confirmar-email?token={token}";
-
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Ebenezer Camp", "no-reply@ebenezer.local"));
-            message.To.Add(MailboxAddress.Parse(pessoa.Email));
-            message.Subject = "Confirme seu e-mail";
-
-            message.Body = new TextPart("plain")
-            {
-                Text = $@"Olá, {pessoa.Nome}!
-                Clique no link para confirmar seu e-mail:
-                {link}"
-            };
-
-            using var client = new SmtpClient();
-            await client.ConnectAsync("localhost", 25, false); // Papercut SMTP
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
-        }
+        using var client = new SmtpClient();
+        await client.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+        await client.AuthenticateAsync(emailFrom, emailPassword);
+        await client.SendAsync(message);
+        await client.DisconnectAsync(true);
     }
 }
