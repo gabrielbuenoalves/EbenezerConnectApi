@@ -28,7 +28,7 @@ jobs:
         run: dotnet build EbenezerConnectApi/EbenezerConnectApi/EbenezerConnectApi.csproj --configuration Release --no-restore
 
       - name: Publish project
-        run: dotnet publish EbenezerConnectApi/EbenezerConnectApi/EbenezerConnectApi.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp --no-build
+        run: dotnet publish EbenezerConnectApi/EbenezerConnectApi/EbenezerConnectApi.csproj -c Release -o "./publish" --no-build
 
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
