@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy ASP.Net Core app to Azure Web App - EbenezerAPIWIN
 
 on:
@@ -13,12 +10,13 @@ jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: read # Required for actions/checkout
+      contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Set up .NET Core
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.x'
@@ -26,16 +24,16 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore EbenezerConnectApi/EbenezerConnectApi.csproj
 
-      - name: Build with dotnet
+      - name: Build project
         run: dotnet build EbenezerConnectApi/EbenezerConnectApi.csproj --configuration Release --no-restore
 
-      - name: Publish with dotnet
+      - name: Publish project
         run: dotnet publish EbenezerConnectApi/EbenezerConnectApi.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp --no-build
 
-      - name: Upload artifact for deployment job
+      - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
-          name: .net-app
+          name: dotnet-app
           path: ${{env.DOTNET_ROOT}}/myapp
 
   deploy:
@@ -45,14 +43,14 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write # Required for requesting the JWT
-      contents: read  # Required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
-      - name: Download artifact from build job
+      - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
+          name: dotnet-app
 
       - name: Login to Azure
         uses: azure/login@v2
