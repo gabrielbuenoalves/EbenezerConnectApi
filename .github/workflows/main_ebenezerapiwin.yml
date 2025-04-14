@@ -22,13 +22,13 @@ jobs:
           dotnet-version: '8.x'
 
       - name: Restore dependencies
-        run: dotnet restore EbenezerConnectApi/EbenezerConnectApi.csproj
+        run: dotnet restore EbenezerConnectApi/EbenezerConnectApi/EbenezerConnectApi.csproj
 
       - name: Build project
-        run: dotnet build EbenezerConnectApi/EbenezerConnectApi.csproj --configuration Release --no-restore
+        run: dotnet build EbenezerConnectApi/EbenezerConnectApi/EbenezerConnectApi.csproj --configuration Release --no-restore
 
       - name: Publish project
-        run: dotnet publish EbenezerConnectApi/EbenezerConnectApi.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp --no-build
+        run: dotnet publish EbenezerConnectApi/EbenezerConnectApi/EbenezerConnectApi.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp --no-build
 
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
