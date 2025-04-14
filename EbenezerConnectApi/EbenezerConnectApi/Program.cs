@@ -96,7 +96,25 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Configure o pipeline
+// Middleware global para capturar erros não tratados
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next.Invoke();
+    }
+    catch (Exception ex)
+    {
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Erro não tratado");
+
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync("{\"erro\": \"Erro interno no servidor\"}");
+    }
+});
+
+// Swagger apenas em DEV e PROD
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
