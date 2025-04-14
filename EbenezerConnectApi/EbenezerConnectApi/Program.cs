@@ -117,6 +117,7 @@ app.Use(async (context, next) =>
 // Swagger apenas em DEV e PROD
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
+    app.UseDeveloperExceptionPage(); // Ajuda a ver o erro detalhado no Azure
     app.UseSwagger();
     app.UseSwaggerUI();
 }

@@ -40,33 +40,27 @@ namespace EbenezerConnectApi.Controllers
             _logger = logger;
         }
 
-        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto dto)
         {
+            if (dto.Senha != dto.ConfirmarSenha)
+                return BadRequest("Senha e confirmação não coincidem.");
+
             try
             {
-                if (dto.Senha != dto.ConfirmarSenha)
-                    return BadRequest("Senha e confirmação não coincidem.");
-
                 var pessoa = _mapper.Map<Pessoa>(dto);
-
-                // Verifica se já existe um usuário com o mesmo e-mail
-                var usuarioExistente = await _pessoaRepository.BuscarPorEmail(dto.Email);
-                if (usuarioExistente != null)
-                    return BadRequest("Já existe um usuário com este e-mail.");
-
                 await _usuarioService.Cadastrar(pessoa, dto.Senha);
 
                 return Ok("Cadastro realizado com sucesso! Verifique seu e-mail para confirmar.");
             }
             catch (Exception ex)
             {
-                // logar no console, que o Azure captura
-                Console.WriteLine($"Erro ao registrar: {ex.Message} - StackTrace: {ex.StackTrace}");
+                // Loga o erro para aparecer no log streaming da Azure
+                Console.WriteLine($"Erro ao registrar usuário: {ex.Message}\n{ex.StackTrace}");
                 return StatusCode(500, "Erro interno ao tentar registrar o usuário.");
             }
         }
+
 
 
         [AllowAnonymous]
