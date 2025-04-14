@@ -33,7 +33,7 @@ jobs:
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
-          name: dotnet-app
+          name: .net-app
           path: ${{env.DOTNET_ROOT}}/myapp
 
   deploy:
@@ -50,7 +50,7 @@ jobs:
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: dotnet-app
+          name: .net-app
 
       - name: Login to Azure
         uses: azure/login@v2
