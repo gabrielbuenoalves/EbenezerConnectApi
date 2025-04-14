@@ -13,15 +13,14 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
+// Swagger com suporte a JWT
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "EbenezerConnectApi", Version = "v1" });
 
-    // Habilita suporte a JWT Bearer
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -47,25 +46,36 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
 builder.Services.AddAutoMapper(typeof(MappingProfile));
-//Injeções de Dependencia Repository
-builder.Services.AddScoped<IUsuarioService, UsuarioService>();
-builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<IPessoaService, PessoaService>();
+
+// Repositórios
 builder.Services.AddScoped<IPessoaRepository, PessoaRepository>();
 builder.Services.AddScoped<IEmailConfirmacaoRepository, EmailConfirmacaoRepository>();
-builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<ITransacaoCantinaRepository, TransacaoCantinaRepository>();
-//Injeção de Dependencia Service
+
+// Services
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IPessoaService, PessoaService>();
 builder.Services.AddScoped<ITransacaoCantinaService, TransacaoCantinaService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<EmailService>();
+
+// Autorização global
 builder.Services.AddControllers(options =>
 {
-    options.Filters.Add(new AuthorizeFilter()); // ?? isso força autenticação global
+    options.Filters.Add(new AuthorizeFilter());
 });
 
+// Banco de dados com retry resiliente
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions => sqlOptions.EnableRetryOnFailure()
+    )
+);
+
+// Autenticação JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {
@@ -83,10 +93,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// Configure o pipeline
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
