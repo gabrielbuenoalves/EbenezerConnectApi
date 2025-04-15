@@ -39,7 +39,7 @@ namespace EbenezerConnectApi.Controllers
             _emailService = emailService;
             _logger = logger;
         }
-
+        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto dto)
         {
