@@ -1,4 +1,4 @@
-using EbenezerConnectApi.Repository;
+Ôªøusing EbenezerConnectApi.Repository;
 using EbenezerConnectApi.Repository.Interfaces;
 using EbenezerConnectApi.Services.Interfaces;
 using EbenezerConnectApi.Services;
@@ -10,23 +10,32 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Mvc.Authorization;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"
+});
 
+// üîÅ Carrega config com suporte a m√∫ltiplos appsettings
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+    .AddEnvironmentVariables();
+
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy
-            .AllowAnyOrigin() // VocÍ pode trocar por .WithOrigins("http://localhost:60682") se quiser restringir
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
-// Add services to the container.
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
 
 // Swagger com suporte a JWT
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "EbenezerConnectApi", Version = "v1" });
@@ -57,27 +66,24 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add(new AuthorizeFilter()); // autoriza√ß√£o global
+});
+
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// RepositÛrios
+// Reposit√≥rios e Servi√ßos
 builder.Services.AddScoped<IPessoaRepository, PessoaRepository>();
 builder.Services.AddScoped<IEmailConfirmacaoRepository, EmailConfirmacaoRepository>();
 builder.Services.AddScoped<ITransacaoCantinaRepository, TransacaoCantinaRepository>();
-
-// Services
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IPessoaService, PessoaService>();
 builder.Services.AddScoped<ITransacaoCantinaService, TransacaoCantinaService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<EmailService>();
 
-// AutorizaÁ„o global
-builder.Services.AddControllers(options =>
-{
-    options.Filters.Add(new AuthorizeFilter());
-});
-
-// Banco de dados com retry resiliente
+// Banco de dados
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -85,7 +91,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     )
 );
 
-// AutenticaÁ„o JWT
+// JWT Auth
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {
@@ -106,7 +112,7 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Middleware global para capturar erros n„o tratados
+// Middleware global para capturar erros n√£o tratados
 app.Use(async (context, next) =>
 {
     try
@@ -116,7 +122,7 @@ app.Use(async (context, next) =>
     catch (Exception ex)
     {
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Erro n„o tratado");
+        logger.LogError(ex, "Erro n√£o tratado");
 
         context.Response.StatusCode = 500;
         context.Response.ContentType = "application/json";
@@ -124,13 +130,13 @@ app.Use(async (context, next) =>
     }
 });
 
-// Swagger apenas em DEV e PROD
+// Swagger em ambientes DEV ou PROD
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
-    app.UseDeveloperExceptionPage(); // Ajuda a ver o erro detalhado no Azure
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 app.UseAuthentication();
