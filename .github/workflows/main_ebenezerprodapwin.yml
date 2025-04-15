@@ -22,13 +22,13 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependências
-        run: dotnet restore EbenezerConnectApi/EbenezerConnectApi.csproj
+        run: dotnet restore EbenezerConnectApi/EbenezerConnectApi/EbenezerConnectApi.csproj
 
       - name: Build
-        run: dotnet build EbenezerConnectApi/EbenezerConnectApi.csproj --configuration Release --no-restore
+        run: dotnet build EbenezerConnectApi/EbenezerConnectApi/EbenezerConnectApi.csproj --configuration Release --no-restore
 
       - name: Publish
-        run: dotnet publish EbenezerConnectApi/EbenezerConnectApi.csproj -c Release -o ./publish --no-build
+        run: dotnet publish EbenezerConnectApi/EbenezerConnectApi/EbenezerConnectApi.csproj -c Release -o ./publish --no-build
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -54,7 +54,7 @@ jobs:
 
       - name: Login to Azure
         uses: azure/login@v2
-        with:
+       with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_3432697D831F4EDFB31E144F206CF13D }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CE1C649450DC4312AA97986ABBE013E6 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D086AF6C5ECC447DB5E8148948F7443C }}
