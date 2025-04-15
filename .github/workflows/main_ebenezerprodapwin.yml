@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy ASP.Net Core app to Azure Web App - EbenezerProdApWin
 
 on:
@@ -13,23 +10,24 @@ jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: 📥 Checkout do código
+        uses: actions/checkout@v4
 
-      - name: Set up .NET Core
+      - name: 🛠️ Setup .NET Core
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.x'
 
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
+      - name: 🧱 Build com dotnet
+        run: dotnet build EbenezerConnectApi/EbenezerConnectApi.csproj --configuration Release
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+      - name: 📦 Publicar projeto
+        run: dotnet publish EbenezerConnectApi/EbenezerConnectApi.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
 
-      - name: Upload artifact for deployment job
+      - name: ☁️ Upload do artefato
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
@@ -42,27 +40,26 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
-      - name: Download artifact from build job
+      - name: 📥 Baixar artefato da build
         uses: actions/download-artifact@v4
         with:
           name: .net-app
-      
-      - name: Login to Azure
+
+      - name: 🔐 Login no Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_3432697D831F4EDFB31E144F206CF13D }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CE1C649450DC4312AA97986ABBE013E6 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D086AF6C5ECC447DB5E8148948F7443C }}
 
-      - name: Deploy to Azure Web App
+      - name: 🚀 Deploy no Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'EbenezerProdApWin'
           slot-name: 'Production'
           package: .
-          
