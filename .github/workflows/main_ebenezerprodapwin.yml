@@ -1,4 +1,4 @@
-name: Build and deploy ASP.Net Core app to Azure Web App - EbenezerAPIWIN
+name: Build and deploy ASP.Net Core app to Azure Web App - EbenezerProdApWin
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout código
+      - name: Checkout do código
         uses: actions/checkout@v4
 
       - name: Setup .NET
@@ -54,7 +54,7 @@ jobs:
 
       - name: Login to Azure
         uses: azure/login@v2
-       with:
+        with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_3432697D831F4EDFB31E144F206CF13D }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CE1C649450DC4312AA97986ABBE013E6 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D086AF6C5ECC447DB5E8148948F7443C }}
@@ -63,6 +63,6 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'EbenezerAPIWIN'
+          app-name: 'EbenezerProdApWin'
           slot-name: 'Production'
           package: .
