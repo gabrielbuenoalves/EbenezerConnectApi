@@ -69,5 +69,16 @@ namespace EbenezerConnectApi.Repository
             return await _context.Pessoa
                 .FirstOrDefaultAsync(p => p.Id == id && p.Cpf == cpf);
         }
+
+        public async Task AdicionarCredito(int id, decimal valor)
+        {
+            var pessoa = await _context.Pessoa.FindAsync(id);
+            if (pessoa != null)
+            {
+                pessoa.Saldo += (double)valor;
+                _context.Pessoa.Update(pessoa);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }
