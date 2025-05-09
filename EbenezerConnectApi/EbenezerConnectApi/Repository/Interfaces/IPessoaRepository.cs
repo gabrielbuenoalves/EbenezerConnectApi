@@ -13,6 +13,8 @@ namespace EbenezerConnectApi.Repository.Interfaces
         Task AtualizarPessoa(Pessoa pessoa);
         Task RemoverPessoa(int id);
         Task<Pessoa?> VerificarSaldoPessoa(int id, string cpf);
+
+        Task AdicionarCredito(int id, decimal valor);
     }
 
 }
