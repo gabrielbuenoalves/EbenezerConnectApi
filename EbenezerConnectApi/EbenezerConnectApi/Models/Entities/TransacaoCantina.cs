@@ -16,7 +16,7 @@ namespace EbenezerConnectApi.Models.Entities
         public DateTime DataTransacao { get; set; }
 
         [Required]
-        [Column(TypeName = "decimal(18, 2)")]
+        [Column(TypeName = "decimal(18,2)")]
         public double Valor { get; set; }
 
         [MaxLength(255)]
@@ -24,9 +24,11 @@ namespace EbenezerConnectApi.Models.Entities
 
         [Required]
         [MaxLength(50)]
-        public string Tipo { get; set; }
+        public string Tipo { get; set; } // saldo / avista / pendente
 
         [ForeignKey("PessoaId")]
         public Pessoa Pessoa { get; set; }
+
+        public ICollection<ItemTransacaoCantina> Itens { get; set; }
     }
 }
