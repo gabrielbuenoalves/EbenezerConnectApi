@@ -3,11 +3,11 @@ using EbenezerConnectApi.Models.Entities;
 
 namespace EbenezerConnectApi.Services.Interfaces
 {
-    public interface IProdutoEstoqueService
+    public interface IProdutoService
     {
-        Task<List<ProdutoEstoque>> ListarTodos();
-        Task<ProdutoEstoque?> ObterPorId(int id);
-        Task<bool> Adicionar(ProdutoEstoque produto);
+        Task<List<Produto>> ListarTodos();
+        Task<Produto?> ObterPorId(int id);
+        Task<bool> Adicionar(Produto produto);
         Task<bool> Atualizar(int id, AtualizarProdutoDto dto);
         Task<bool> Remover(int id);
         Task<bool> AtualizarPreco(int produtoId, decimal novoPrecoCompra, decimal novoPrecoVenda);

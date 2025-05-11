@@ -84,8 +84,8 @@ builder.Services.AddScoped<IPessoaService, PessoaService>();
 builder.Services.AddScoped<ITransacaoCantinaService, TransacaoCantinaService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<EmailService>();
-builder.Services.AddScoped<IProdutoEstoqueService, ProdutoEstoqueService>();
-builder.Services.AddScoped<IProdutoEstoqueRepository, ProdutoEstoqueRepository>();
+builder.Services.AddScoped<IProdutoService, ProdutoService>();
+builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
 
 
 // Banco de dados

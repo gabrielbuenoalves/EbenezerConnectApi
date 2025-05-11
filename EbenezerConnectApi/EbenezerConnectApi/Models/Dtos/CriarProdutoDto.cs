@@ -1,6 +1,6 @@
 ﻿namespace EbenezerConnectApi.Models.Dtos
 {
-    public class CreateProductDto
+    public class CriarProdutoDto
     {
         public string? Nome { get; set; }
         public int QuantidadeEstoque { get; set; }
