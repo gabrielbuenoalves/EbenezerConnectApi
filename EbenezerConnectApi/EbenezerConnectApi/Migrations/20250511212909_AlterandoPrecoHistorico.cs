@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace EbenezerConnectApi.Migrations
 {
     /// <inheritdoc />
-    public partial class InitMySQL : Migration
+    public partial class AlterandoPrecoHistorico : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,7 +16,7 @@ namespace EbenezerConnectApi.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "ProdutoEstoque",
+                name: "Produto",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -29,7 +29,7 @@ namespace EbenezerConnectApi.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProdutoEstoque", x => x.Id);
+                    table.PrimaryKey("PK_Produto", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -55,7 +55,9 @@ namespace EbenezerConnectApi.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    ProdutoEstoqueId = table.Column<int>(type: "int", nullable: false),
+                    NomeProduto = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ProdutoId = table.Column<int>(type: "int", nullable: false),
                     PrecoCompra = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     PrecoVenda = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     DataInicio = table.Column<DateTime>(type: "datetime(6)", nullable: false)
@@ -64,9 +66,9 @@ namespace EbenezerConnectApi.Migrations
                 {
                     table.PrimaryKey("PK_PrecoHistoricoProduto", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_PrecoHistoricoProduto_ProdutoEstoque_ProdutoEstoqueId",
-                        column: x => x.ProdutoEstoqueId,
-                        principalTable: "ProdutoEstoque",
+                        name: "FK_PrecoHistoricoProduto_Produto_ProdutoId",
+                        column: x => x.ProdutoId,
+                        principalTable: "Produto",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
@@ -163,7 +165,7 @@ namespace EbenezerConnectApi.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     TransacaoCantinaId = table.Column<int>(type: "int", nullable: false),
-                    ProdutoEstoqueId = table.Column<int>(type: "int", nullable: false),
+                    ProdutoId = table.Column<int>(type: "int", nullable: false),
                     Quantidade = table.Column<int>(type: "int", nullable: false),
                     PrecoVendaUnitario = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     PrecoCompraUnitario = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
@@ -172,9 +174,9 @@ namespace EbenezerConnectApi.Migrations
                 {
                     table.PrimaryKey("PK_ItemTransacaoCantina", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ItemTransacaoCantina_ProdutoEstoque_ProdutoEstoqueId",
-                        column: x => x.ProdutoEstoqueId,
-                        principalTable: "ProdutoEstoque",
+                        name: "FK_ItemTransacaoCantina_Produto_ProdutoId",
+                        column: x => x.ProdutoId,
+                        principalTable: "Produto",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -192,9 +194,9 @@ namespace EbenezerConnectApi.Migrations
                 column: "PessoaId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ItemTransacaoCantina_ProdutoEstoqueId",
+                name: "IX_ItemTransacaoCantina_ProdutoId",
                 table: "ItemTransacaoCantina",
-                column: "ProdutoEstoqueId");
+                column: "ProdutoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ItemTransacaoCantina_TransacaoCantinaId",
@@ -213,9 +215,9 @@ namespace EbenezerConnectApi.Migrations
                 column: "QuartoId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PrecoHistoricoProduto_ProdutoEstoqueId",
+                name: "IX_PrecoHistoricoProduto_ProdutoId",
                 table: "PrecoHistoricoProduto",
-                column: "ProdutoEstoqueId");
+                column: "ProdutoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransacaoCantina_PessoaId",
@@ -239,7 +241,7 @@ namespace EbenezerConnectApi.Migrations
                 name: "TransacaoCantina");
 
             migrationBuilder.DropTable(
-                name: "ProdutoEstoque");
+                name: "Produto");
 
             migrationBuilder.DropTable(
                 name: "Pessoa");

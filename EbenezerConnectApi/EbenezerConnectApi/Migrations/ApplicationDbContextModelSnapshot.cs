@@ -148,6 +148,10 @@ namespace EbenezerConnectApi.Migrations
                     b.Property<DateTime>("DataInicio")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("NomeProduto")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<decimal>("PrecoCompra")
                         .HasColumnType("decimal(18,2)");
 

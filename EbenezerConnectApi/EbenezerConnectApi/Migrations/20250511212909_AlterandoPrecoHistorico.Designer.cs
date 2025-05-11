@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EbenezerConnectApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250511023636_RenameEstoqueProdutoforProduto")]
-    partial class RenameEstoqueProdutoforProduto
+    [Migration("20250511212909_AlterandoPrecoHistorico")]
+    partial class AlterandoPrecoHistorico
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -150,6 +150,10 @@ namespace EbenezerConnectApi.Migrations
 
                     b.Property<DateTime>("DataInicio")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("NomeProduto")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<decimal>("PrecoCompra")
                         .HasColumnType("decimal(18,2)");

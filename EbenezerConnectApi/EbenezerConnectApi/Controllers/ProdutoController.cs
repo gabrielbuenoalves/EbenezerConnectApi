@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using EbenezerConnectApi.Models.Dtos;
 using EbenezerConnectApi.Models.Entities;
+using EbenezerConnectApi.Services;
 using EbenezerConnectApi.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,8 +22,11 @@ namespace EbenezerConnectApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetTodos() =>
-            Ok(await _service.ListarTodos());
+        public async Task<IActionResult> GetTodos()
+        {
+            var pessoas = await _service.ListarTodos();
+            return Ok(pessoas);
+        }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetPorId(int id)

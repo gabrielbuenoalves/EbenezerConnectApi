@@ -18,9 +18,18 @@ namespace EbenezerConnectApi.Services
 
         public async Task<List<Produto>> ListarTodos()
         {
-            return await _context.Produto
-                .Include(p => p.HistoricoPrecos)
-                .ToListAsync();
+            try
+            {
+                var produto = await _context.Produto
+                    .Include(p => p.HistoricoPrecos)
+                    .ToListAsync();
+                return produto;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message); // Ou use logger
+                throw;
+            }
         }
 
         public async Task<Produto?> ObterPorId(int id)
@@ -76,6 +85,7 @@ namespace EbenezerConnectApi.Services
             {
                 var historico = new PrecoHistoricoProduto
                 {
+                    NomeProduto = produtoExistente.Nome,
                     ProdutoId = produtoExistente.Id,
                     PrecoCompra = dto.PrecoCompra,
                     PrecoVenda = dto.PrecoVenda,
