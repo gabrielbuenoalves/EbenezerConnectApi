@@ -7,39 +7,39 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EbenezerConnectApi.Services
 {
-    public class ProdutoEstoqueService : IProdutoEstoqueService
+    public class ProdutoService : IProdutoService
     {
         private readonly ApplicationDbContext _context;
 
-        public ProdutoEstoqueService(ApplicationDbContext context)
+        public ProdutoService(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        public async Task<List<ProdutoEstoque>> ListarTodos()
+        public async Task<List<Produto>> ListarTodos()
         {
-            return await _context.ProdutoEstoque
+            return await _context.Produto
                 .Include(p => p.HistoricoPrecos)
                 .ToListAsync();
         }
 
-        public async Task<ProdutoEstoque?> ObterPorId(int id)
+        public async Task<Produto?> ObterPorId(int id)
         {
-            return await _context.ProdutoEstoque
+            return await _context.Produto
                 .Include(p => p.HistoricoPrecos)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public async Task<bool> Adicionar(ProdutoEstoque produto)
+        public async Task<bool> Adicionar(Produto produto)
         {
             try
             {
-                await _context.ProdutoEstoque.AddAsync(produto);
+                await _context.Produto.AddAsync(produto);
                 await _context.SaveChangesAsync();
 
                 var historico = new PrecoHistoricoProduto
                 {
-                    ProdutoEstoqueId = produto.Id,
+                    ProdutoId = produto.Id,
                     PrecoCompra = produto.PrecoCompraAtual,
                     PrecoVenda = produto.PrecoVendaAtual,
                     DataInicio = DateTime.UtcNow
@@ -60,7 +60,7 @@ namespace EbenezerConnectApi.Services
 
         public async Task<bool> Atualizar(int id, AtualizarProdutoDto dto)
         {
-            var produtoExistente = await _context.ProdutoEstoque.FindAsync(id);
+            var produtoExistente = await _context.Produto.FindAsync(id);
             if (produtoExistente == null) return false;
 
             bool houveMudancaPreco =
@@ -76,7 +76,7 @@ namespace EbenezerConnectApi.Services
             {
                 var historico = new PrecoHistoricoProduto
                 {
-                    ProdutoEstoqueId = produtoExistente.Id,
+                    ProdutoId = produtoExistente.Id,
                     PrecoCompra = dto.PrecoCompra,
                     PrecoVenda = dto.PrecoVenda,
                     DataInicio = DateTime.UtcNow
@@ -85,24 +85,24 @@ namespace EbenezerConnectApi.Services
                 await _context.PrecoHistoricoProduto.AddAsync(historico);
             }
 
-            _context.ProdutoEstoque.Update(produtoExistente);
+            _context.Produto.Update(produtoExistente);
             await _context.SaveChangesAsync();
             return true;
         }
 
         public async Task<bool> Remover(int id)
         {
-            var produto = await _context.ProdutoEstoque.FindAsync(id);
+            var produto = await _context.Produto.FindAsync(id);
             if (produto == null) return false;
 
-            _context.ProdutoEstoque.Remove(produto);
+            _context.Produto.Remove(produto);
             await _context.SaveChangesAsync();
             return true;
         }
 
         public async Task<bool> AtualizarPreco(int produtoId, decimal novoPrecoCompra, decimal novoPrecoVenda)
         {
-            var produto = await _context.ProdutoEstoque.FindAsync(produtoId);
+            var produto = await _context.Produto.FindAsync(produtoId);
             if (produto == null) return false;
 
             produto.PrecoCompraAtual = novoPrecoCompra;
@@ -110,7 +110,7 @@ namespace EbenezerConnectApi.Services
 
             var historico = new PrecoHistoricoProduto
             {
-                ProdutoEstoqueId = produtoId,
+                ProdutoId = produtoId,
                 PrecoCompra = novoPrecoCompra,
                 PrecoVenda = novoPrecoVenda,
                 DataInicio = DateTime.UtcNow

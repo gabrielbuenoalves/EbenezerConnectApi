@@ -9,12 +9,12 @@ namespace EbenezerConnectApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ProdutoEstoqueController : ControllerBase
+    public class ProdutoController : ControllerBase
     {
-        private readonly IProdutoEstoqueService _service;
+        private readonly IProdutoService _service;
         private readonly IMapper _mapper;
 
-        public ProdutoEstoqueController(IProdutoEstoqueService service, IMapper mapper)
+        public ProdutoController(IProdutoService service, IMapper mapper)
         {
             _service = service;
             _mapper = mapper;
@@ -33,10 +33,10 @@ namespace EbenezerConnectApi.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> Post([FromBody] CreateProductDto dto)
+        public async Task<IActionResult> Post([FromBody] CriarProdutoDto dto)
         {
             
-            var produto = _mapper.Map<ProdutoEstoque>(dto);
+            var produto = _mapper.Map<Produto>(dto);
             await _service.Adicionar(produto);
 
             var produtoDto = _mapper.Map<ExibirProdutoDto>(produto);

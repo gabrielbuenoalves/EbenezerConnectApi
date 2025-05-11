@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace EbenezerConnectApi.Models.Entities
 {
-    public class ProdutoEstoque
+    public class Produto
     {
         [Key]
         public int Id { get; set; }

@@ -13,7 +13,7 @@ namespace EbenezerConnectApi.Models.Entities
         public int TransacaoCantinaId { get; set; }
 
         [Required]
-        public int ProdutoEstoqueId { get; set; }
+        public int ProdutoId { get; set; }
 
         [Required]
         public int Quantidade { get; set; }
@@ -32,7 +32,7 @@ namespace EbenezerConnectApi.Models.Entities
         [ForeignKey("TransacaoCantinaId")]
         public TransacaoCantina Transacao { get; set; }
 
-        [ForeignKey("ProdutoEstoqueId")]
-        public ProdutoEstoque Produto { get; set; }
+        [ForeignKey("ProdutoId")]
+        public Produto Produto { get; set; }
     }
 }
