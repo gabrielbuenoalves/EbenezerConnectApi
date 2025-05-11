@@ -1,5 +1,8 @@
-﻿using EbenezerConnectApi.Models.Entities;
+﻿using AutoMapper;
+using EbenezerConnectApi.Models.Dtos;
+using EbenezerConnectApi.Models.Entities;
 using EbenezerConnectApi.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EbenezerConnectApi.Controllers
@@ -9,10 +12,12 @@ namespace EbenezerConnectApi.Controllers
     public class ProdutoEstoqueController : ControllerBase
     {
         private readonly IProdutoEstoqueService _service;
+        private readonly IMapper _mapper;
 
-        public ProdutoEstoqueController(IProdutoEstoqueService service)
+        public ProdutoEstoqueController(IProdutoEstoqueService service, IMapper mapper)
         {
             _service = service;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -27,19 +32,22 @@ namespace EbenezerConnectApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] ProdutoEstoque produto)
+        [AllowAnonymous]
+        public async Task<IActionResult> Post([FromBody] CreateProductDto dto)
         {
+            
+            var produto = _mapper.Map<ProdutoEstoque>(dto);
             await _service.Adicionar(produto);
-            return CreatedAtAction(nameof(GetPorId), new { id = produto.Id }, produto);
+
+            var produtoDto = _mapper.Map<ExibirProdutoDto>(produto);
+            return CreatedAtAction(nameof(GetPorId), new { id = produto.Id },produtoDto);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] ProdutoEstoque produto)
+        public async Task<IActionResult> Put(int id, [FromBody] AtualizarProdutoDto dto)
         {
-            if (id != produto.Id)
-                return BadRequest();
 
-            var atualizado = await _service.Atualizar(produto);
+            var atualizado = await _service.Atualizar(id, dto);
             return atualizado ? NoContent() : NotFound();
         }
 

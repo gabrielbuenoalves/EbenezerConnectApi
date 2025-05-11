@@ -1,4 +1,5 @@
-﻿using EbenezerConnectApi.Models.Entities;
+﻿using EbenezerConnectApi.Models.Dtos;
+using EbenezerConnectApi.Models.Entities;
 using EbenezerConnectApi.Repository;
 using EbenezerConnectApi.Repository.Interfaces;
 using EbenezerConnectApi.Services.Interfaces;
@@ -31,38 +32,11 @@ namespace EbenezerConnectApi.Services
 
         public async Task<bool> Adicionar(ProdutoEstoque produto)
         {
-            await _context.ProdutoEstoque.AddAsync(produto);
-            await _context.SaveChangesAsync();
-
-            var historico = new PrecoHistoricoProduto
+            try
             {
-                ProdutoEstoqueId = produto.Id,
-                PrecoCompra = produto.PrecoCompraAtual,
-                PrecoVenda = produto.PrecoVendaAtual,
-                DataInicio = DateTime.UtcNow
-            };
+                await _context.ProdutoEstoque.AddAsync(produto);
+                await _context.SaveChangesAsync();
 
-            await _context.PrecoHistoricoProduto.AddAsync(historico);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> Atualizar(ProdutoEstoque produto)
-        {
-            var existente = await _context.ProdutoEstoque.FindAsync(produto.Id);
-            if (existente == null) return false;
-
-            bool houveMudancaPreco =
-                existente.PrecoCompraAtual != produto.PrecoCompraAtual ||
-                existente.PrecoVendaAtual != produto.PrecoVendaAtual;
-
-            existente.Nome = produto.Nome;
-            existente.QuantidadeEmEstoque = produto.QuantidadeEmEstoque;
-            existente.PrecoCompraAtual = produto.PrecoCompraAtual;
-            existente.PrecoVendaAtual = produto.PrecoVendaAtual;
-
-            if (houveMudancaPreco)
-            {
                 var historico = new PrecoHistoricoProduto
                 {
                     ProdutoEstoqueId = produto.Id,
@@ -72,9 +46,46 @@ namespace EbenezerConnectApi.Services
                 };
 
                 await _context.PrecoHistoricoProduto.AddAsync(historico);
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao adicionar produto: {ex.Message}");
+                throw;
+            }
+        }
+
+
+        public async Task<bool> Atualizar(int id, AtualizarProdutoDto dto)
+        {
+            var produtoExistente = await _context.ProdutoEstoque.FindAsync(id);
+            if (produtoExistente == null) return false;
+
+            bool houveMudancaPreco =
+                produtoExistente.PrecoCompraAtual != dto.PrecoCompra ||
+                produtoExistente.PrecoVendaAtual != dto.PrecoVenda;
+
+
+            produtoExistente.QuantidadeEmEstoque = dto.QuantidadeEstoque;
+            produtoExistente.PrecoCompraAtual = dto.PrecoCompra;
+            produtoExistente.PrecoVendaAtual = dto.PrecoVenda;
+
+            if (houveMudancaPreco)
+            {
+                var historico = new PrecoHistoricoProduto
+                {
+                    ProdutoEstoqueId = produtoExistente.Id,
+                    PrecoCompra = dto.PrecoCompra,
+                    PrecoVenda = dto.PrecoVenda,
+                    DataInicio = DateTime.UtcNow
+                };
+
+                await _context.PrecoHistoricoProduto.AddAsync(historico);
             }
 
-            _context.ProdutoEstoque.Update(existente);
+            _context.ProdutoEstoque.Update(produtoExistente);
             await _context.SaveChangesAsync();
             return true;
         }

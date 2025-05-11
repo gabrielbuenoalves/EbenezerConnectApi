@@ -16,6 +16,8 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"
 });
 
+builder.Logging.AddConsole();
+
 // 🔁 Carrega config com suporte a múltiplos appsettings
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -82,6 +84,9 @@ builder.Services.AddScoped<IPessoaService, PessoaService>();
 builder.Services.AddScoped<ITransacaoCantinaService, TransacaoCantinaService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<IProdutoEstoqueService, ProdutoEstoqueService>();
+builder.Services.AddScoped<IProdutoEstoqueRepository, ProdutoEstoqueRepository>();
+
 
 // Banco de dados
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
