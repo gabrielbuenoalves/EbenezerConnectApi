@@ -13,6 +13,9 @@ namespace EbenezerConnectApi.Repository
         public DbSet<TransacaoCantina> TransacaoCantina { get; set; }
         public DbSet<EmailConfirmacao> EmailConfirmacao { get; set; }
         public DbSet<Quarto> Quarto { get; set; }
+        public DbSet<ProdutoEstoque> ProdutoEstoque { get; set; }
+        public DbSet<PrecoHistoricoProduto> PrecoHistoricoProduto { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

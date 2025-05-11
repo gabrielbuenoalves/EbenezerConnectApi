@@ -21,6 +21,19 @@ namespace EbenezerConnectApi.Models.Mappings
 
             // Pessoa → LoginResponse
             CreateMap<Pessoa, LoginResponseDto>();
+
+            //Criar Produto -> ProdutoEstoque
+            CreateMap<CreateProductDto, ProdutoEstoque>()
+                .ForMember(dest => dest.QuantidadeEmEstoque, opt => opt.MapFrom(src => src.QuantidadeEstoque))
+                .ForMember(dest => dest.PrecoCompraAtual, opt => opt.MapFrom(src => src.PrecoCompra))
+                .ForMember(dest => dest.PrecoVendaAtual, opt => opt.MapFrom(src => src.PrecoVenda))
+                .ForMember(dest => dest.HistoricoPrecos, opt => opt.Ignore()); // Ignora para evitar problemas
+
+            CreateMap<ProdutoEstoque, ExibirProdutoDto>()
+                .ForMember(dest => dest.QuantidadeEmEstoque, opt => opt.MapFrom(src => src.QuantidadeEmEstoque))
+                .ForMember(dest => dest.PrecoCompraAtual, opt => opt.MapFrom(src => src.PrecoCompraAtual))
+                .ForMember(dest => dest.PrecoVendaAtual, opt => opt.MapFrom(src => src.PrecoVendaAtual));
+
         }
     }
 }
