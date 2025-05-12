@@ -41,5 +41,10 @@ namespace EbenezerConnectApi.Services
         {
             await _pessoaRepository.RemoverPessoa(id);
         }
+
+        public async Task AdicionarCredito(int id, decimal valor)
+        {
+            await _pessoaRepository.AdicionarCredito(id, valor);
+        }
     }
 }

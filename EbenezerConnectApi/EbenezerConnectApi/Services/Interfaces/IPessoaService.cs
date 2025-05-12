@@ -9,6 +9,8 @@ namespace EbenezerConnectApi.Services.Interfaces
         Task<Pessoa?> ObterPorId(int id);
         Task AtualizarPessoa(Pessoa pessoa);
         Task RemoverPessoa(int id);
+        Task AdicionarCredito(int id, decimal valor);
+     
     }
 
 }

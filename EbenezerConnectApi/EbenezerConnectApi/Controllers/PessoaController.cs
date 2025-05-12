@@ -70,5 +70,15 @@ namespace EbenezerConnectApi.Controllers
             await _pessoaService.RemoverPessoa(id);
             return NoContent();
         }
+
+        [Authorize]
+        [HttpPost("creditos")]
+        public async Task<IActionResult> AdicionarCreditos([FromBody] AdicionarCreditoDto dto)
+        {
+            await _pessoaService.AdicionarCredito(dto.PessoaId, dto.Valor);
+            return Ok("Créditos adicionados com sucesso!");
+
+        }
+
     }
 }
