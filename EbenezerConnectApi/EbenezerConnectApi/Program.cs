@@ -16,6 +16,10 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"
 });
 
+builder.Services.AddControllers()
+    .AddJsonOptions(x =>
+        x.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
+
 builder.Logging.AddConsole();
 
 // 🔁 Carrega config com suporte a múltiplos appsettings
@@ -114,6 +118,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
 
 // Middleware global para capturar erros não tratados
 app.Use(async (context, next) =>

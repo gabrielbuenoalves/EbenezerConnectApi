@@ -11,9 +11,6 @@ namespace EbenezerConnectApi.Models.Entities
         [Required]
         public int ProdutoId { get; set; }
 
-        [ForeignKey("ProdutoId")]
-        public Produto? Produto { get; set; }
-
         [Column(TypeName = "decimal(18,2)")]
         public decimal PrecoCompra { get; set; }
 
