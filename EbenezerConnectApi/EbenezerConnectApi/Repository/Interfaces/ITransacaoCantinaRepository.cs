@@ -4,6 +4,8 @@ namespace EbenezerConnectApi.Repository.Interfaces
 {
     public interface ITransacaoCantinaRepository
     {
-        Task RegistrarTransacaoCantina(TransacaoCantina transacaoCantina);
+        Task RegistrarTransacaoAsync(TransacaoCantina transacao);
+        Task<TransacaoCantina?> ObterPorIdAsync(int id);
+        Task<List<TransacaoCantina>> ListarTodasAsync();
     }
 }

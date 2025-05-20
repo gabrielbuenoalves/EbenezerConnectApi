@@ -1,5 +1,7 @@
 ﻿using EbenezerConnectApi.Models;
+using EbenezerConnectApi.Models.Dtos;
 using EbenezerConnectApi.Models.Entities;
+using EbenezerConnectApi.Repository;
 using EbenezerConnectApi.Repository.Interfaces;
 using EbenezerConnectApi.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -8,56 +10,73 @@ namespace EbenezerConnectApi.Services
 {
     public class TransacaoCantinaService : ITransacaoCantinaService
     {
-        private readonly ITransacaoCantinaRepository _transacaoCantinaRepository;
-        private readonly IPessoaRepository _pessoaRepository;
-        public TransacaoCantinaService(ITransacaoCantinaRepository transacaoCantinaRepository, IPessoaRepository pessoaRepository) { 
-        
-            _transacaoCantinaRepository = transacaoCantinaRepository;
-            _pessoaRepository = pessoaRepository;
-        }
-        
-        public async Task<EfetuarCompraResult> EfetuarCompra(int pessoaId,double valorCompra,string descricao)
+        private readonly ApplicationDbContext _context;
+
+        public TransacaoCantinaService(ApplicationDbContext context)
         {
-            //verificar se a pessoa existe
-            var pessoa = await _pessoaRepository.ObterPorId(pessoaId);
-            if(pessoa == null)
+            _context = context;
+        }
+
+        public async Task<bool> EfetuarTransacaoAsync(RegistrarTransacaoDto dto)
+        {
+            var pessoa = await _context.Pessoa.FindAsync(dto.PessoaId);
+            if (pessoa == null || dto.Itens == null || !dto.Itens.Any())
+                return false;
+
+            var produtosIds = dto.Itens.Select(i => i.ProdutoId).ToList();
+            var produtos = await _context.Produto
+                .Where(p => produtosIds.Contains(p.Id))
+                .ToDictionaryAsync(p => p.Id);
+
+            var itensTransacao = new List<ItemTransacaoCantina>();
+            double total = 0;
+
+            foreach (var itemDto in dto.Itens)
             {
-                return new EfetuarCompraResult
+                if (!produtos.TryGetValue(itemDto.ProdutoId, out var produto) || produto.QuantidadeEmEstoque < itemDto.Quantidade)
+                    return false;
+
+                produto.QuantidadeEmEstoque -= itemDto.Quantidade;
+
+                var precoVenda = (double)produto.PrecoVendaAtual;
+                var precoCompra = (double)produto.PrecoCompraAtual;
+
+                total += precoVenda * itemDto.Quantidade;
+
+                itensTransacao.Add(new ItemTransacaoCantina
                 {
-                    Sucesso = false,
-                    Mensagem = "Pessoa não encontrada, favor verificar cadastro."
-                };
+                    ProdutoId = itemDto.ProdutoId,
+                    Quantidade = itemDto.Quantidade,
+                    PrecoVendaUnitario = precoVenda,
+                    PrecoCompraUnitario = precoCompra
+                });
             }
-            // 2. Verificar se o saldo é suficiente
-            if (pessoa.Saldo < valorCompra)
+
+            switch (dto.TipoPagamento.ToLower())
             {
-                return new EfetuarCompraResult
-                {
-                    Sucesso = false,
-                    Mensagem = "Saldo insuficiente para realizar a compra."
-                };
+                case "saldo":
+                    pessoa.Saldo -= total;
+                    _context.Pessoa.Update(pessoa);
+                    break;
+                case "avista":
+                    // saldo não é alterado
+                    break;
+                default:
+                    return false;
             }
-            // 3. Registrar a transação de compra
+
             var transacao = new TransacaoCantina
             {
-                PessoaId = pessoaId,
-                DataTransacao = DateTime.Now,
-                Valor = valorCompra,
-                Descricao = descricao,
-                Tipo = "Compra"
+                PessoaId = dto.PessoaId,
+                DataTransacao = DateTime.UtcNow,
+                Valor = total,
+                Tipo = dto.TipoPagamento,
+                Itens = itensTransacao
             };
-            _transacaoCantinaRepository.RegistrarTransacaoCantina(transacao);
 
-            // 4. Atualizar o saldo da pessoa
-            pessoa.Saldo -= valorCompra;
-            _pessoaRepository.AtualizarPessoa(pessoa);
-
-            return new EfetuarCompraResult
-            {
-                Sucesso = true,
-                Mensagem = "Compra realizada com sucesso.",
-                SaldoAtual = pessoa.Saldo
-            };
+            await _context.TransacaoCantina.AddAsync(transacao);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

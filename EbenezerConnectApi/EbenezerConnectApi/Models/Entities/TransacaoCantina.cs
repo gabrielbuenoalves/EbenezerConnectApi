@@ -19,9 +19,6 @@ namespace EbenezerConnectApi.Models.Entities
         [Column(TypeName = "decimal(18,2)")]
         public double Valor { get; set; }
 
-        [MaxLength(255)]
-        public string Descricao { get; set; }
-
         [Required]
         [MaxLength(50)]
         public string Tipo { get; set; } // saldo / avista / pendente
