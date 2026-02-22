@@ -5,10 +5,12 @@ using EbenezerConnectApi.Services;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using EbenezerConnectApi.Models.Mappings;
+using EbenezerConnectApi.Models.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using BCrypt.Net;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -72,10 +74,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddControllers(options =>
-{
-    options.Filters.Add(new AuthorizeFilter()); // autorização global
-});
+builder.Services.AddControllers();
 
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
@@ -118,6 +117,101 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+// 🌱 Seeding de dados
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    context.Database.EnsureCreated();
+    
+    // Verificar se já existe um usuário admin
+    var adminExists = context.Pessoa.Any(p => p.Email == "admin@example.com");
+    
+    if (!adminExists)
+    {
+        // Criar usuário admin
+        var adminSenha = BCrypt.Net.BCrypt.HashPassword("password123");
+        var admin = new Pessoa
+        {
+            Nome = "Administrador",
+            Email = "admin@example.com",
+            Cpf = "12345678901",
+            Funcao = "admin",
+            SenhaHash = adminSenha,
+            EmailConfirmado = true,
+            Saldo = 1000
+        };
+        
+        // Criar acampantes de teste
+        var acampante1 = new Pessoa
+        {
+            Nome = "João Silva",
+            Email = "joao@example.com",
+            Cpf = "12345678902",
+            Funcao = "acampante",
+            SenhaHash = BCrypt.Net.BCrypt.HashPassword("password123"),
+            EmailConfirmado = true,
+            Saldo = 100
+        };
+        
+        var acampante2 = new Pessoa
+        {
+            Nome = "Maria Santos",
+            Email = "maria@example.com",
+            Cpf = "12345678903",
+            Funcao = "acampante",
+            SenhaHash = BCrypt.Net.BCrypt.HashPassword("password123"),
+            EmailConfirmado = true,
+            Saldo = 150
+        };
+        
+        // Criar conselheiro
+        var conselheiro = new Pessoa
+        {
+            Nome = "Pedro Costa",
+            Email = "pedro@example.com",
+            Cpf = "12345678904",
+            Funcao = "conselheiro",
+            SenhaHash = BCrypt.Net.BCrypt.HashPassword("password123"),
+            EmailConfirmado = true,
+            Saldo = 500
+        };
+        
+        context.Pessoa.AddRange(admin, acampante1, acampante2, conselheiro);
+        context.SaveChanges();
+        
+        // Criar produtos
+        var produto1 = new Produto
+        {
+            Nome = "Refrigerante",
+            QuantidadeEmEstoque = 50,
+            PrecoCompraAtual = 2.00m,
+            PrecoVendaAtual = 5.00m
+        };
+        
+        var produto2 = new Produto
+        {
+            Nome = "Sanduíche",
+            QuantidadeEmEstoque = 3,
+            PrecoCompraAtual = 7.00m,
+            PrecoVendaAtual = 15.00m
+        };
+        
+        var produto3 = new Produto
+        {
+            Nome = "Doce",
+            QuantidadeEmEstoque = 20,
+            PrecoCompraAtual = 1.50m,
+            PrecoVendaAtual = 3.50m
+        };
+        
+        context.Produto.AddRange(produto1, produto2, produto3);
+        context.SaveChanges();
+        
+        Console.WriteLine("✅ Dados de teste criados com sucesso!");
+        Console.WriteLine("🔐 Login: admin@example.com / password123");
+    }
+}
 
 
 // Middleware global para capturar erros não tratados

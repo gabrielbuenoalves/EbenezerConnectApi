@@ -21,6 +21,7 @@ namespace EbenezerConnectApi.Controllers
         private readonly IMapper _mapper;
         private readonly EmailService _emailService;
         private readonly ILogger<AuthController> _logger;
+        private readonly IWebHostEnvironment _env;
 
         public AuthController(
             IUsuarioService usuarioService,
@@ -29,7 +30,8 @@ namespace EbenezerConnectApi.Controllers
             IJwtService jwtService,
             IMapper mapper,
             EmailService emailService,
-            ILogger<AuthController> logger)
+            ILogger<AuthController> logger,
+            IWebHostEnvironment env)
         {
             _usuarioService = usuarioService;
             _pessoaRepository = pessoaRepository;
@@ -38,6 +40,7 @@ namespace EbenezerConnectApi.Controllers
             _mapper = mapper;
             _emailService = emailService;
             _logger = logger;
+            _env = env;
         }
         [AllowAnonymous]
         [HttpPost("register")]
@@ -73,7 +76,8 @@ namespace EbenezerConnectApi.Controllers
                 if (usuario == null)
                     return Unauthorized("Credenciais inválidas.");
 
-                if (!usuario.EmailConfirmado)
+                // Em desenvolvimento, permite login sem confirmação de email
+                if (!usuario.EmailConfirmado && _env.IsProduction())
                     return Unauthorized("E-mail ainda não confirmado. Verifique sua caixa de entrada.");
 
                 if (!BCrypt.Net.BCrypt.Verify(dto.Senha, usuario.SenhaHash))
@@ -142,6 +146,21 @@ namespace EbenezerConnectApi.Controllers
                 _logger.LogError(ex, "Erro ao confirmar e-mail");
                 return StatusCode(500, "Erro interno ao tentar confirmar o e-mail.");
             }
+        }
+
+        // 🔧 Endpoint temporário para desenvolvimento
+        [AllowAnonymous]
+        [HttpPost("dev/confirm-email")]
+        public async Task<IActionResult> DevConfirmEmail([FromQuery] string email)
+        {
+            var pessoa = await _pessoaRepository.BuscarPorEmail(email);
+            if (pessoa == null)
+                return NotFound("Usuário não encontrado.");
+
+            pessoa.EmailConfirmado = true;
+            await _pessoaRepository.AtualizarPessoa(pessoa);
+
+            return Ok($"Email de {email} confirmado com sucesso!");
         }
     }
 }

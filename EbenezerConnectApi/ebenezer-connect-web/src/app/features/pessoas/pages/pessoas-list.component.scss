@@ -1,0 +1,48 @@
+@use '../../../shared/styles/shared';
+
+.page-header {
+  @apply flex justify-between items-center mb-8;
+
+  h1 {
+    @apply m-0 text-gray-800;
+  }
+}
+
+.filters {
+  @apply flex gap-2.5;
+}
+
+.table-container {
+  @apply bg-white rounded-lg;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.data-table {
+  @apply w-full border-collapse;
+
+  thead {
+    @apply bg-indigo-600 text-white;
+  }
+
+  th, td {
+    @apply px-4 py-3.5 text-left;
+    border-bottom: 1px solid #eee;
+  }
+}
+
+.badge {
+  @apply px-3 py-1 rounded-full text-xs font-medium;
+
+  &.acampante {
+    @apply bg-blue-100 text-blue-700;
+  }
+
+  &.conselheiro {
+    @apply bg-purple-100 text-purple-700;
+  }
+
+  &.admin {
+    @apply bg-red-100 text-red-700;
+  }
+}

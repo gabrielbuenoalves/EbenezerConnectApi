@@ -21,8 +21,12 @@ namespace EbenezerConnectApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetTodos() =>
-            Ok(await _service.ListarTodos());
+        public async Task<IActionResult> GetTodos()
+        {
+            var produtos = await _service.ListarTodos();
+            var dtos = _mapper.Map<List<ExibirProdutoDto>>(produtos);
+            return Ok(dtos);
+        }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetPorId(int id)
