@@ -9,11 +9,6 @@ namespace EbenezerConnectApi.Models.Entities
 
         [Required]
         [StringLength(50)]
-        public string Nome { get; set; }
-
-        [Required]
-        public int Capacidade { get; set; }
-
-        public ICollection<Pessoa> Pessoas { get; set; } = new List<Pessoa>();
+    public string Nome { get; set; } = string.Empty;
     }
 }

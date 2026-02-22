@@ -30,9 +30,9 @@ namespace EbenezerConnectApi.Models.Entities
         public double LucroItem => (PrecoVendaUnitario - PrecoCompraUnitario) * Quantidade;
 
         [ForeignKey("TransacaoCantinaId")]
-        public TransacaoCantina Transacao { get; set; }
+        public TransacaoCantina Transacao { get; set; } = null!;
 
         [ForeignKey("ProdutoId")]
-        public Produto Produto { get; set; }
+        public Produto Produto { get; set; } = null!;
     }
 }

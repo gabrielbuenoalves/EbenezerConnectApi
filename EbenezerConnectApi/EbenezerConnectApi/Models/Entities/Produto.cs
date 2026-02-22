@@ -9,7 +9,7 @@ namespace EbenezerConnectApi.Models.Entities
         public int Id { get; set; }
 
         [Required, MaxLength(100)]
-        public string Nome { get; set; }
+        public string Nome { get; set; } = string.Empty;
 
         [Required]
         public int QuantidadeEmEstoque { get; set; }
@@ -22,9 +22,6 @@ namespace EbenezerConnectApi.Models.Entities
         [Column(TypeName = "decimal(18,2)")]
         public decimal PrecoVendaAtual { get; set; }
 
-        // 👇 Remova qualquer Required aqui
         public ICollection<PrecoHistoricoProduto>? HistoricoPrecos { get; set; }
     }
-
-
 }

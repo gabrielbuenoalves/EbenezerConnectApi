@@ -21,11 +21,11 @@ namespace EbenezerConnectApi.Models.Entities
 
         [Required]
         [MaxLength(50)]
-        public string Tipo { get; set; } // saldo / avista / pendente
+        public string Tipo { get; set; } = string.Empty; // saldo / avista / pendente
 
         [ForeignKey("PessoaId")]
-        public Pessoa Pessoa { get; set; }
+        public Pessoa Pessoa { get; set; } = null!;
 
-        public ICollection<ItemTransacaoCantina> Itens { get; set; }
+        public ICollection<ItemTransacaoCantina> Itens { get; set; } = new List<ItemTransacaoCantina>();
     }
 }

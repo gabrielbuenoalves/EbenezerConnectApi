@@ -2,8 +2,8 @@
 {
     public class RedefinirSenhaDto
     {
-        public string Email { get; set; }
-        public string SenhaTemporaria { get; set; }
-        public string NovaSenha { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string SenhaTemporaria { get; set; } = string.Empty;
+        public string NovaSenha { get; set; } = string.Empty;
     }
 }

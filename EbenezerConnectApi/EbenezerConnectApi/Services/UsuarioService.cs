@@ -3,17 +3,10 @@ using EbenezerConnectApi.Repository.Interfaces;
 using EbenezerConnectApi.Services.Interfaces;
 using BCrypt.Net;
 using AutoMapper;
-using EbenezerConnectApi.Models.Entities;
 using EbenezerConnectApi.Repository;
-using EbenezerConnectApi.Services.Interfaces;
 
 namespace EbenezerConnectApi.Services
 {
-    using BCrypt.Net;
-    using EbenezerConnectApi.Models.Entities;
-    using EbenezerConnectApi.Repository.Interfaces;
-    using EbenezerConnectApi.Services.Interfaces;
-
     public class UsuarioService : IUsuarioService
     {
         private readonly IPessoaRepository _pessoaRepository;
@@ -33,7 +26,7 @@ namespace EbenezerConnectApi.Services
         public async Task Cadastrar(Pessoa pessoa, string senha)
         {
             // Hash da senha
-            pessoa.SenhaHash = BCrypt.HashPassword(senha);
+            pessoa.SenhaHash = BCrypt.Net.BCrypt.HashPassword(senha);
             pessoa.EmailConfirmado = false;
 
             await _pessoaRepository.AdicionarPessoa(pessoa);
@@ -62,7 +55,7 @@ namespace EbenezerConnectApi.Services
             if (!usuario.EmailConfirmado)
                 return null; // 🚫 E-mail ainda não confirmado
 
-            bool senhaCorreta = BCrypt.Verify(senha, usuario.SenhaHash);
+            bool senhaCorreta = BCrypt.Net.BCrypt.Verify(senha, usuario.SenhaHash);
             return senhaCorreta ? usuario : null;
         }
     }

@@ -3,7 +3,7 @@
     public class RegistrarTransacaoDto
     {
         public int PessoaId { get; set; }
-        public string TipoPagamento { get; set; } // "saldo", "avista", "pendente"
+        public string TipoPagamento { get; set; } = string.Empty; // "saldo", "avista", "pendente"
         public List<ItemTransacaoDto> Itens { get; set; } = new();
     }
 }

@@ -12,30 +12,24 @@ namespace EbenezerConnectApi.Models.Entities
 
         [Required]
         [StringLength(50)]
-        public string Funcao { get; set; } // "acampante", "conselheiro", "admin"
+    public string Funcao { get; set; } = string.Empty; // "acampante", "conselheiro", "admin"
 
-        [Required]
-        [StringLength(100)]
-        public string Nome { get; set; }
+    [Required]
+    [StringLength(100)]
+    public string Nome { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(11)]
-        [Column(TypeName = "varchar(11)")]
-        public string Cpf { get; set; }
+    [Required]
+    [StringLength(11)]
+    [Column(TypeName = "varchar(11)")]
+    public string Cpf { get; set; } = string.Empty;
 
-        [Required]
-        [EmailAddress]
-        [StringLength(100)]
-        public string Email { get; set; } // Adicionado para autenticação
+    [Required]
+    [EmailAddress]
+    [StringLength(100)]
+    public string Email { get; set; } = string.Empty; // Adicionado para autenticação
 
-        [Required]
-        public string SenhaHash { get; set; } // Hash da senha, não armazenar senha pura!
-
-        [StringLength(100)]
-        public string? Igreja { get; set; }
-
-        [Required]
-        [Column(TypeName = "decimal(18, 2)")]
+    [Required]
+    public string SenhaHash { get; set; } = string.Empty; // Hash da senha, não armazenar senha pura!
         public double Saldo { get; set; } = 0;
 
         // Ligação com quarto (opcional)
