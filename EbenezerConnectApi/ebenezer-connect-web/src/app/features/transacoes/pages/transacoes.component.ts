@@ -32,9 +32,15 @@ interface ResumoCompra {
         <div class="left-panel">
           <div class="card">
             <h3>Selecionar Pessoa</h3>
+            <input 
+              type="text" 
+              [(ngModel)]="pessoaBusca" 
+              (input)="filtrarPessoas()"
+              class="form-control search-input"
+              placeholder="Buscar por nome..." />
             <select [(ngModel)]="pessoaSelecionadaId" (change)="selecionarPessoa()" class="form-control">
               <option value="">Selecione uma pessoa...</option>
-              <option *ngFor="let pessoa of pessoas; trackBy: trackByPessoaId" [value]="pessoa.id">
+              <option *ngFor="let pessoa of pessoasFiltradas; trackBy: trackByPessoaId" [value]="pessoa.id">
                 {{ pessoa.nome }} - R$ {{ pessoa.saldo.toFixed(2) }}
               </option>
             </select>
@@ -46,10 +52,16 @@ interface ResumoCompra {
 
           <div class="card">
             <h3>Adicionar Produtos</h3>
+            <input 
+              type="text" 
+              [(ngModel)]="produtoBusca" 
+              (input)="filtrarProdutos()"
+              class="form-control search-input"
+              placeholder="Buscar por nome..." />
             <div class="produto-select">
               <select [(ngModel)]="produtoSelecionadoId" class="form-control">
                 <option value="">Selecione um produto...</option>
-                <option *ngFor="let produto of produtos; trackBy: trackByProdutoId" [value]="produto.id">
+                <option *ngFor="let produto of produtosFiltrados; trackBy: trackByProdutoId" [value]="produto.id">
                   {{ produto.nome }} - R$ {{ produto.precoVendaAtual.toFixed(2) }} (Estoque: {{ produto.quantidadeEmEstoque }})
                 </option>
               </select>
@@ -145,9 +157,13 @@ interface ResumoCompra {
 export class TransacoesComponent implements OnInit {
   pessoas: Pessoa[] = [];
   produtos: Produto[] = [];
+  pessoasFiltradas: Pessoa[] = [];
+  produtosFiltrados: Produto[] = [];
   pessoaSelecionadaId: string = '';
   pessoaSelecionada: Pessoa | null = null;
+  pessoaBusca: string = '';
   produtoSelecionadoId: string = '';
+  produtoBusca: string = '';
   quantidade: number = 1;
   tipoPagamento: 'saldo' | 'avista' = 'saldo';
   carrinho: ItemCarrinho[] = [];
@@ -171,6 +187,7 @@ export class TransacoesComponent implements OnInit {
     this.pessoaService.getAll().subscribe({
       next: (data) => {
         this.pessoas = data;
+        this.filtrarPessoas();
         this.cdr.detectChanges();
       },
       error: (err) => console.error(err)
@@ -181,10 +198,33 @@ export class TransacoesComponent implements OnInit {
     this.produtoService.getAll().subscribe({
       next: (data) => {
         this.produtos = data.filter(p => p.quantidadeEmEstoque > 0);
+        this.filtrarProdutos();
         this.cdr.detectChanges();
       },
       error: (err) => console.error(err)
     });
+  }
+
+  filtrarPessoas(): void {
+    const busca = this.pessoaBusca.toLowerCase();
+    if (!busca) {
+      this.pessoasFiltradas = this.pessoas;
+    } else {
+      this.pessoasFiltradas = this.pessoas.filter(p => 
+        p.nome.toLowerCase().includes(busca)
+      );
+    }
+  }
+
+  filtrarProdutos(): void {
+    const busca = this.produtoBusca.toLowerCase();
+    if (!busca) {
+      this.produtosFiltrados = this.produtos;
+    } else {
+      this.produtosFiltrados = this.produtos.filter(p => 
+        p.nome.toLowerCase().includes(busca)
+      );
+    }
   }
 
   selecionarPessoa(): void {
