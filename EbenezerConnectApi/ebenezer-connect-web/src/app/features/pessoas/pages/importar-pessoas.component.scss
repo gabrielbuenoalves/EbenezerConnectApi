@@ -123,7 +123,7 @@
   animation: slideDown 0.3s ease-in-out;
 
   .success-content {
-    @apply flex items-flex-start gap-4;
+    @apply flex items-start gap-4;
   }
 
   .success-icon {

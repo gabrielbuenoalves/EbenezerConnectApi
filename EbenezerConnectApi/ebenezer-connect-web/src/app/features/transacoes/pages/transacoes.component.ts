@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef, Directive, HostListener, Output, 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { timeout } from 'rxjs';
 import { TransacaoService } from '../../../core/services/transacao.service';
 import { PessoaService } from '../../../core/services/pessoa.service';
 import { ProdutoService } from '../../../core/services/produto.service';
@@ -17,7 +18,8 @@ export class ClickOutsideDirective {
   constructor(private elementRef: ElementRef) {}
 
   @HostListener('document:click', ['$event.target'])
-  public onClick(target: HTMLElement): void {
+  public onClick(target: any): void {
+    if (!target) return;
     const clickedInside = this.elementRef.nativeElement.contains(target);
     if (!clickedInside) {
       this.clickOutside.emit();
@@ -46,32 +48,36 @@ interface ResumoCompra {
       <h1>Cantina</h1>
     </div>
 
+    <div *ngIf="mensagemSucesso" class="success-message">
+      {{ mensagemSucesso }}
+    </div>
+
     <div class="transacao-container">
         <div class="left-panel">
           <div class="card">
             <h3>Selecionar Pessoa</h3>
-            <div class="dropdown-container" (clickOutside)="fecharDropdownPessoa()">
-              <div class="dropdown-header" (click)="abrirDropdownPessoa()">
+            <div class="custom-dropdown" (click)="toggleDropdownPessoa()" (clickOutside)="fecharDropdownPessoa()">
+              <div class="dropdown-header">
                 <span *ngIf="!pessoaSelecionada" class="placeholder">Selecione uma pessoa...</span>
                 <span *ngIf="pessoaSelecionada">{{ pessoaSelecionada.nome }}</span>
-                <span class="dropdown-arrow">▼</span>
+                <span class="arrow" [class.open]="mostrarDropdownPessoa">▼</span>
               </div>
               
-              <div class="dropdown-menu" *ngIf="mostrarDropdownPessoa">
+              <div class="dropdown-content" *ngIf="mostrarDropdownPessoa">
                 <input 
                   type="text" 
-                  [(ngModel)]="pessoaBuscaTexto" 
+                  [(ngModel)]="pessoaBusca" 
                   (input)="filtrarPessoas()"
+                  (click)="$event.stopPropagation()"
                   class="dropdown-search"
                   placeholder="Buscar pessoa..." 
-                  style="width: 100%;"
                   autofocus />
                 <div class="dropdown-list">
                   <div 
                     *ngFor="let pessoa of pessoasFiltradas; trackBy: trackByPessoaId"
-                    (click)="selecionarPessoa(pessoa.id.toString())"
+                    (click)="$event.stopPropagation(); selecionarPessoa(pessoa.id.toString())"
                     class="dropdown-item">
-                    <strong>{{ pessoa.nome }}</strong>
+                    <span>{{ pessoa.nome }}</span>
                     <span class="saldo">R$ {{ pessoa.saldo.toFixed(2) }}</span>
                   </div>
                   <div *ngIf="pessoasFiltradas.length === 0" class="no-results">
@@ -88,40 +94,40 @@ interface ResumoCompra {
 
           <div class="card">
             <h3>Adicionar Produtos</h3>
-            <div class="dropdown-container produto-row" (clickOutside)="fecharDropdownProduto()">
-              <div class="dropdown-header" (click)="abrirDropdownProduto()">
-                <span *ngIf="!produtoSelecionadoId" class="placeholder">Selecione um produto...</span>
-                <span *ngIf="produtoSelecionadoId" class="selected-product">
-                  {{ getProdutoNome(produtoSelecionadoId) }}
-                </span>
-                <span class="dropdown-arrow">▼</span>
-              </div>
-              
-              <div class="dropdown-menu" *ngIf="mostrarDropdownProduto">
-                <input 
-                  type="text" 
-                  [(ngModel)]="produtoBuscaTexto" 
-                  (input)="filtrarProdutos()"
-                  class="dropdown-search"
-                  placeholder="Buscar produto..." 
-                  style="width: 100%;"
-                  autofocus />
-                <div class="dropdown-list">
-                  <div 
-                    *ngFor="let produto of produtosFiltrados; trackBy: trackByProdutoId"
-                    (click)="selecionarProduto(produto.id.toString())"
-                    class="dropdown-item">
-                    <strong>{{ produto.nome }}</strong>
-                    <span class="preco-estoque">R$ {{ produto.precoVendaAtual.toFixed(2) }} (Est: {{ produto.quantidadeEmEstoque }})</span>
-                  </div>
-                  <div *ngIf="produtosFiltrados.length === 0" class="no-results">
-                    Nenhum produto encontrado
+            <div class="produto-form">
+              <div class="custom-dropdown" (click)="toggleDropdownProduto()" (clickOutside)="fecharDropdownProduto()">
+                <div class="dropdown-header">
+                  <span *ngIf="!produtoSelecionadoId" class="placeholder">Selecione um produto...</span>
+                  <span *ngIf="produtoSelecionadoId">{{ getProdutoNome(produtoSelecionadoId) }}</span>
+                  <span class="arrow" [class.open]="mostrarDropdownProduto">▼</span>
+                </div>
+                
+                <div class="dropdown-content" *ngIf="mostrarDropdownProduto">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="produtoBusca" 
+                    (input)="filtrarProdutos()"
+                    (click)="$event.stopPropagation()"
+                    class="dropdown-search"
+                    placeholder="Buscar produto..." 
+                    autofocus />
+                  <div class="dropdown-list">
+                    <div 
+                      *ngFor="let produto of produtosFiltrados; trackBy: trackByProdutoId"
+                      (click)="$event.stopPropagation(); selecionarProduto(produto.id.toString())"
+                      class="dropdown-item">
+                      <span>{{ produto.nome }}</span>
+                      <span class="preco">R$ {{ produto.precoVendaAtual.toFixed(2) }} (Est: {{ produto.quantidadeEmEstoque }})</span>
+                    </div>
+                    <div *ngIf="produtosFiltrados.length === 0" class="no-results">
+                      Nenhum produto encontrado
+                    </div>
                   </div>
                 </div>
               </div>
+              <input type="number" [(ngModel)]="quantidade" min="1" placeholder="Qtd" class="form-control-sm" />
+              <button (click)="adicionarAoCarrinho()" class="btn-primary">Adicionar</button>
             </div>
-            <input type="number" [(ngModel)]="quantidade" min="1" placeholder="Qtd" class="form-control-sm" />
-            <button (click)="adicionarAoCarrinho()" class="btn-primary">Adicionar</button>
           </div>
 
           <div class="card">
@@ -215,10 +221,10 @@ export class TransacoesComponent implements OnInit {
   produtosFiltrados: Produto[] = [];
   pessoaSelecionadaId: string = '';
   pessoaSelecionada: Pessoa | null = null;
-  pessoaBuscaTexto: string = '';
+  pessoaBusca: string = '';
   mostrarDropdownPessoa: boolean = false;
   produtoSelecionadoId: string = '';
-  produtoBuscaTexto: string = '';
+  produtoBusca: string = '';
   mostrarDropdownProduto: boolean = false;
   quantidade: number = 1;
   tipoPagamento: 'saldo' | 'avista' = 'saldo';
@@ -226,6 +232,8 @@ export class TransacoesComponent implements OnInit {
   modalAberta: boolean = false;
   resumoCompra: ResumoCompra | null = null;
   processandoTransacao: boolean = false;
+  mensagemSucesso: string = '';
+  private sucessoTimeoutId: number | null = null;
 
   constructor(
     private transacaoService: TransacaoService,
@@ -261,54 +269,54 @@ export class TransacoesComponent implements OnInit {
     });
   }
 
-  abrirDropdownPessoa(): void {
-    this.mostrarDropdownPessoa = true;
-    this.pessoaBuscaTexto = '';
-    this.pessoasFiltradas = this.pessoas;
+  toggleDropdownPessoa(): void {
+    this.mostrarDropdownPessoa = !this.mostrarDropdownPessoa;
+    if (this.mostrarDropdownPessoa) {
+      this.pessoaBusca = '';
+      this.pessoasFiltradas = this.pessoas;
+    }
   }
 
   fecharDropdownPessoa(): void {
     this.mostrarDropdownPessoa = false;
-    this.pessoaBuscaTexto = '';
   }
 
   filtrarPessoas(): void {
-    const texto = this.pessoaBuscaTexto.toLowerCase();
-    if (!texto) {
+    const termo = this.pessoaBusca.toLowerCase();
+    if (!termo) {
       this.pessoasFiltradas = this.pessoas;
     } else {
-      this.pessoasFiltradas = this.pessoas.filter(p =>
-        p.nome.toLowerCase().includes(texto)
+      this.pessoasFiltradas = this.pessoas.filter(p => 
+        p.nome.toLowerCase().includes(termo)
       );
     }
   }
 
-  selecionarPessoa(pessoaId?: string): void {
-    if (pessoaId) {
-      this.pessoaSelecionadaId = pessoaId;
-    }
-    this.pessoaSelecionada = this.pessoas.find(p => p.id.toString() === this.pessoaSelecionadaId) || null;
+  selecionarPessoa(pessoaId: string): void {
+    this.pessoaSelecionadaId = pessoaId;
+    this.pessoaSelecionada = this.pessoas.find(p => p.id.toString() === pessoaId) || null;
     this.fecharDropdownPessoa();
   }
 
-  abrirDropdownProduto(): void {
-    this.mostrarDropdownProduto = true;
-    this.produtoBuscaTexto = '';
-    this.produtosFiltrados = this.produtos;
+  toggleDropdownProduto(): void {
+    this.mostrarDropdownProduto = !this.mostrarDropdownProduto;
+    if (this.mostrarDropdownProduto) {
+      this.produtoBusca = '';
+      this.produtosFiltrados = this.produtos;
+    }
   }
 
   fecharDropdownProduto(): void {
     this.mostrarDropdownProduto = false;
-    this.produtoBuscaTexto = '';
   }
 
   filtrarProdutos(): void {
-    const texto = this.produtoBuscaTexto.toLowerCase();
-    if (!texto) {
+    const termo = this.produtoBusca.toLowerCase();
+    if (!termo) {
       this.produtosFiltrados = this.produtos;
     } else {
       this.produtosFiltrados = this.produtos.filter(p =>
-        p.nome.toLowerCase().includes(texto)
+        p.nome.toLowerCase().includes(termo)
       );
     }
   }
@@ -425,12 +433,14 @@ export class TransacoesComponent implements OnInit {
       }))
     };
 
-    this.transacaoService.registrarTransacao(transacao).subscribe({
+    this.transacaoService.registrarTransacao(transacao)
+      .pipe(timeout(10000))
+      .subscribe({
       next: () => {
-        alert('Transação realizada com sucesso!');
         this.processandoTransacao = false;
         this.modalAberta = false;
         this.resumoCompra = null;
+        this.exibirMensagemSucesso('Transação realizada com sucesso!');
         this.carrinho = [];
         this.pessoaSelecionadaId = '';
         this.pessoaSelecionada = null;
@@ -440,6 +450,9 @@ export class TransacoesComponent implements OnInit {
       error: (err) => {
         this.processandoTransacao = false;
         let mensagemErro = 'Erro ao realizar transação';
+        if (err?.name === 'TimeoutError') {
+          mensagemErro = 'Tempo limite excedido. Tente novamente.';
+        }
         if (err.error && err.error.erro) {
           mensagemErro = err.error.erro;
         } else if (err.message) {
@@ -449,6 +462,18 @@ export class TransacoesComponent implements OnInit {
         console.error('Erro na transação:', err);
       }
     });
+  }
+
+  private exibirMensagemSucesso(mensagem: string): void {
+    this.mensagemSucesso = mensagem;
+    this.cdr.detectChanges();
+    if (this.sucessoTimeoutId) {
+      window.clearTimeout(this.sucessoTimeoutId);
+    }
+    this.sucessoTimeoutId = window.setTimeout(() => {
+      this.mensagemSucesso = '';
+      this.sucessoTimeoutId = null;
+    }, 3000);
   }
 
   formatarTipoPagamento(tipo: string): string {
@@ -462,7 +487,7 @@ export class TransacoesComponent implements OnInit {
 
   getProdutoNome(produtoId: string): string {
     const produto = this.produtos.find(p => p.id.toString() === produtoId);
-    return produto ? produto.nome : '';
+    return produto ? produto.nome : 'Produto';
   }
 
   trackByIndex(index: number): number {

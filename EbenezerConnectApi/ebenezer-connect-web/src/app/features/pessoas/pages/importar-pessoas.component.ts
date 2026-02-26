@@ -1,7 +1,6 @@
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { trigger, transition, style, animate } from '@angular/animations';
 import { PessoaService } from '../../../core/services/pessoa.service';
 import { AuthService } from '../../../core/services/auth.service';
 import * as XLSX from 'xlsx';
@@ -10,17 +9,6 @@ import * as XLSX from 'xlsx';
   selector: 'app-importar-pessoas',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  animations: [
-    trigger('fadeInOut', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(-20px)' }),
-        animate('300ms ease-in', style({ opacity: 1, transform: 'translateY(0)' }))
-      ]),
-      transition(':leave', [
-        animate('300ms ease-out', style({ opacity: 0, transform: 'translateY(-20px)' }))
-      ])
-    ])
-  ],
   template: `
     <div class="import-container">
       <div class="import-card">
@@ -95,7 +83,7 @@ import * as XLSX from 'xlsx';
           {{ errorMessage }}
         </div>
 
-        <div class="success-message" *ngIf="successMessage" [@fadeInOut]>
+        <div class="success-message" *ngIf="successMessage">
           <div class="success-content">
             <span class="success-icon">✓</span>
             <div class="success-text">
