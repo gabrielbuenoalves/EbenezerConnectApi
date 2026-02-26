@@ -69,9 +69,16 @@
   .dropdown-search {
     @apply px-3 py-2 border-b border-gray-200 text-sm;
     @apply focus:outline-none focus:border-indigo-400;
+    width: 100%;
     background-color: #ffffff;
     flex-shrink: 0;
     box-sizing: border-box;
+    height: auto;
+    min-height: 40px;
+    display: block;
+    padding: 10px 12px;
+    margin: 0;
+    font-size: 14px;
   }
 
   .dropdown-list {

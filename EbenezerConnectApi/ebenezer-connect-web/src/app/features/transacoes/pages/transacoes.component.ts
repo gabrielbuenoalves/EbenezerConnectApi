@@ -57,14 +57,14 @@ interface ResumoCompra {
                 <span class="dropdown-arrow">▼</span>
               </div>
               
-              <div class="dropdown-menu" *ngIf="mostrarDropdownPessoa\">
+              <div class="dropdown-menu" *ngIf="mostrarDropdownPessoa">
                 <input 
-                  type=\"text\" 
-                  [(ngModel)]=\"pessoaBuscaTexto\" 
-                  (input)=\"filtrarPessoas()\"
-                  class=\"dropdown-search\"
-                  placeholder=\"Buscar pessoa...\" 
-                  style=\"width: 100%;\"
+                  type="text" 
+                  [(ngModel)]="pessoaBuscaTexto" 
+                  (input)="filtrarPessoas()"
+                  class="dropdown-search"
+                  placeholder="Buscar pessoa..." 
+                  style="width: 100%;"
                   autofocus />
                 <div class="dropdown-list">
                   <div 
