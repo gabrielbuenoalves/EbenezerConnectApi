@@ -18,13 +18,6 @@
   @apply w-20 px-2 py-2 border border-gray-300 rounded-md;
 }
 
-.search-input {
-  @apply w-full px-3 py-2 mb-3 border border-gray-300 rounded-md;
-  @apply text-sm text-gray-700 placeholder-gray-400;
-  @apply focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent;
-  @apply transition duration-150 ease-in-out;
-}
-
 .pessoa-info {
   @apply mt-2.5 p-2.5 bg-gray-50 rounded-md;
 }
@@ -34,6 +27,71 @@
 
   select {
     @apply flex-1;
+  }
+}
+
+.dropdown-container {
+  @apply relative mb-3;
+
+  &.produto-row {
+    @apply flex gap-2.5 items-flex-start;
+  }
+}
+
+.dropdown-header {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md bg-white cursor-pointer;
+  @apply flex items-center justify-between text-gray-700;
+  @apply transition duration-150 ease-in-out;
+
+  &:hover {
+    @apply border-indigo-400 bg-indigo-50;
+  }
+
+  .placeholder {
+    @apply text-gray-400;
+  }
+
+  .dropdown-arrow {
+    @apply text-sm font-bold text-gray-500;
+  }
+
+  .selected-product {
+    @apply font-medium text-gray-800;
+  }
+}
+
+.dropdown-menu {
+  @apply absolute top-full left-0 right-0 mt-1 bg-white border border-indigo-300 rounded-md shadow-lg z-50;
+  @apply max-h-64 overflow-hidden flex flex-col;
+
+  .dropdown-search {
+    @apply px-3 py-2 border-b border-gray-200 text-sm;
+    @apply focus:outline-none focus:ring-2 focus:ring-indigo-500;
+  }
+
+  .dropdown-list {
+    @apply overflow-y-auto;
+  }
+
+  .dropdown-item {
+    @apply px-3 py-2 cursor-pointer hover:bg-indigo-50 transition;
+    @apply flex justify-between items-center text-sm;
+
+    strong {
+      @apply text-gray-800;
+    }
+
+    .saldo {
+      @apply text-xs text-gray-500 ml-2;
+    }
+
+    .preco-estoque {
+      @apply text-xs text-gray-500 ml-2;
+    }
+  }
+
+  .no-results {
+    @apply px-3 py-4 text-center text-gray-400 text-sm;
   }
 }
 

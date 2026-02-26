@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, Directive, HostListener, Output, EventEmitter, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -6,6 +6,24 @@ import { TransacaoService } from '../../../core/services/transacao.service';
 import { PessoaService } from '../../../core/services/pessoa.service';
 import { ProdutoService } from '../../../core/services/produto.service';
 import { Pessoa, Produto, ItemTransacaoDto } from '../../../core/models';
+
+@Directive({
+  selector: '[clickOutside]',
+  standalone: true
+})
+export class ClickOutsideDirective {
+  @Output() clickOutside = new EventEmitter<void>();
+
+  constructor(private elementRef: ElementRef) {}
+
+  @HostListener('document:click', ['$event.target'])
+  public onClick(target: HTMLElement): void {
+    const clickedInside = this.elementRef.nativeElement.contains(target);
+    if (!clickedInside) {
+      this.clickOutside.emit();
+    }
+  }
+}
 
 interface ItemCarrinho extends ItemTransacaoDto {
   produtoNome?: string;
@@ -22,7 +40,7 @@ interface ResumoCompra {
 @Component({
   selector: 'app-transacoes',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, ClickOutsideDirective],
   template: `
     <div class="page-header">
       <h1>Cantina</h1>
@@ -32,18 +50,35 @@ interface ResumoCompra {
         <div class="left-panel">
           <div class="card">
             <h3>Selecionar Pessoa</h3>
-            <input 
-              type="text" 
-              [(ngModel)]="pessoaBuscaTexto" 
-              (input)="atualizarPessoasFiltradas()"
-              class="search-input"
-              placeholder="Buscar por nome..." />
-            <select [(ngModel)]="pessoaSelecionadaId" (change)="selecionarPessoa()" class="form-control">
-              <option value="">Selecione uma pessoa...</option>
-              <option *ngFor="let pessoa of pessoasFiltradas; trackBy: trackByPessoaId" [value]="pessoa.id">
-                {{ pessoa.nome }} - R$ {{ pessoa.saldo.toFixed(2) }}
-              </option>
-            </select>
+            <div class="dropdown-container" (clickOutside)="fecharDropdownPessoa()">
+              <div class="dropdown-header" (click)="abrirDropdownPessoa()">
+                <span *ngIf="!pessoaSelecionada" class="placeholder">Selecione uma pessoa...</span>
+                <span *ngIf="pessoaSelecionada">{{ pessoaSelecionada.nome }}</span>
+                <span class="dropdown-arrow">▼</span>
+              </div>
+              
+              <div class="dropdown-menu" *ngIf="mostrarDropdownPessoa">
+                <input 
+                  type="text" 
+                  [(ngModel)]="pessoaBuscaTexto" 
+                  (input)="filtrarPessoas()"
+                  class="dropdown-search"
+                  placeholder="Buscar pessoa..." 
+                  autofocus />
+                <div class="dropdown-list">
+                  <div 
+                    *ngFor="let pessoa of pessoasFiltradas; trackBy: trackByPessoaId"
+                    (click)="selecionarPessoa(pessoa.id.toString())"
+                    class="dropdown-item">
+                    <strong>{{ pessoa.nome }}</strong>
+                    <span class="saldo">R$ {{ pessoa.saldo.toFixed(2) }}</span>
+                  </div>
+                  <div *ngIf="pessoasFiltradas.length === 0" class="no-results">
+                    Nenhuma pessoa encontrada
+                  </div>
+                </div>
+              </div>
+            </div>
             
             <div *ngIf="pessoaSelecionada" class="pessoa-info">
               <p><strong>Saldo Disponível:</strong> R$ {{ pessoaSelecionada.saldo.toFixed(2) }}</p>
@@ -52,22 +87,39 @@ interface ResumoCompra {
 
           <div class="card">
             <h3>Adicionar Produtos</h3>
-            <input 
-              type="text" 
-              [(ngModel)]="produtoBuscaTexto" 
-              (input)="atualizarProdutosFiltrados()"
-              class="search-input"
-              placeholder="Buscar por nome..." />
-            <div class="produto-select">
-              <select [(ngModel)]="produtoSelecionadoId" class="form-control">
-                <option value="">Selecione um produto...</option>
-                <option *ngFor="let produto of produtosFiltrados; trackBy: trackByProdutoId" [value]="produto.id">
-                  {{ produto.nome }} - R$ {{ produto.precoVendaAtual.toFixed(2) }} (Estoque: {{ produto.quantidadeEmEstoque }})
-                </option>
-              </select>
-              <input type="number" [(ngModel)]="quantidade" min="1" placeholder="Qtd" class="form-control-sm" />
-              <button (click)="adicionarAoCarrinho()" class="btn-primary">Adicionar</button>
+            <div class="dropdown-container produto-row" (clickOutside)="fecharDropdownProduto()">
+              <div class="dropdown-header" (click)="abrirDropdownProduto()">
+                <span *ngIf="!produtoSelecionadoId" class="placeholder">Selecione um produto...</span>
+                <span *ngIf="produtoSelecionadoId" class="selected-product">
+                  {{ getProdutoNome(produtoSelecionadoId) }}
+                </span>
+                <span class="dropdown-arrow">▼</span>
+              </div>
+              
+              <div class="dropdown-menu" *ngIf="mostrarDropdownProduto">
+                <input 
+                  type="text" 
+                  [(ngModel)]="produtoBuscaTexto" 
+                  (input)="filtrarProdutos()"
+                  class="dropdown-search"
+                  placeholder="Buscar produto..." 
+                  autofocus />
+                <div class="dropdown-list">
+                  <div 
+                    *ngFor="let produto of produtosFiltrados; trackBy: trackByProdutoId"
+                    (click)="selecionarProduto(produto.id.toString())"
+                    class="dropdown-item">
+                    <strong>{{ produto.nome }}</strong>
+                    <span class="preco-estoque">R$ {{ produto.precoVendaAtual.toFixed(2) }} (Est: {{ produto.quantidadeEmEstoque }})</span>
+                  </div>
+                  <div *ngIf="produtosFiltrados.length === 0" class="no-results">
+                    Nenhum produto encontrado
+                  </div>
+                </div>
+              </div>
             </div>
+            <input type="number" [(ngModel)]="quantidade" min="1" placeholder="Qtd" class="form-control-sm" />
+            <button (click)="adicionarAoCarrinho()" class="btn-primary">Adicionar</button>
           </div>
 
           <div class="card">
@@ -162,8 +214,10 @@ export class TransacoesComponent implements OnInit {
   pessoaSelecionadaId: string = '';
   pessoaSelecionada: Pessoa | null = null;
   pessoaBuscaTexto: string = '';
+  mostrarDropdownPessoa: boolean = false;
   produtoSelecionadoId: string = '';
   produtoBuscaTexto: string = '';
+  mostrarDropdownProduto: boolean = false;
   quantidade: number = 1;
   tipoPagamento: 'saldo' | 'avista' = 'saldo';
   carrinho: ItemCarrinho[] = [];
@@ -187,7 +241,7 @@ export class TransacoesComponent implements OnInit {
     this.pessoaService.getAll().subscribe({
       next: (data) => {
         this.pessoas = data;
-        this.atualizarPessoasFiltradas();
+        this.pessoasFiltradas = data;
         this.cdr.detectChanges();
       },
       error: (err) => console.error(err)
@@ -198,37 +252,68 @@ export class TransacoesComponent implements OnInit {
     this.produtoService.getAll().subscribe({
       next: (data) => {
         this.produtos = data.filter(p => p.quantidadeEmEstoque > 0);
-        this.atualizarProdutosFiltrados();
+        this.produtosFiltrados = this.produtos;
         this.cdr.detectChanges();
       },
       error: (err) => console.error(err)
     });
   }
 
-  atualizarPessoasFiltradas(): void {
+  abrirDropdownPessoa(): void {
+    this.mostrarDropdownPessoa = true;
+    this.pessoaBuscaTexto = '';
+    this.pessoasFiltradas = this.pessoas;
+  }
+
+  fecharDropdownPessoa(): void {
+    this.mostrarDropdownPessoa = false;
+    this.pessoaBuscaTexto = '';
+  }
+
+  filtrarPessoas(): void {
     const texto = this.pessoaBuscaTexto.toLowerCase();
     if (!texto) {
       this.pessoasFiltradas = this.pessoas;
     } else {
-      this.pessoasFiltradas = this.pessoas.filter(p => 
+      this.pessoasFiltradas = this.pessoas.filter(p =>
         p.nome.toLowerCase().includes(texto)
       );
     }
   }
 
-  atualizarProdutosFiltrados(): void {
+  selecionarPessoa(pessoaId?: string): void {
+    if (pessoaId) {
+      this.pessoaSelecionadaId = pessoaId;
+    }
+    this.pessoaSelecionada = this.pessoas.find(p => p.id.toString() === this.pessoaSelecionadaId) || null;
+    this.fecharDropdownPessoa();
+  }
+
+  abrirDropdownProduto(): void {
+    this.mostrarDropdownProduto = true;
+    this.produtoBuscaTexto = '';
+    this.produtosFiltrados = this.produtos;
+  }
+
+  fecharDropdownProduto(): void {
+    this.mostrarDropdownProduto = false;
+    this.produtoBuscaTexto = '';
+  }
+
+  filtrarProdutos(): void {
     const texto = this.produtoBuscaTexto.toLowerCase();
     if (!texto) {
       this.produtosFiltrados = this.produtos;
     } else {
-      this.produtosFiltrados = this.produtos.filter(p => 
+      this.produtosFiltrados = this.produtos.filter(p =>
         p.nome.toLowerCase().includes(texto)
       );
     }
   }
 
-  selecionarPessoa(): void {
-    this.pessoaSelecionada = this.pessoas.find(p => p.id.toString() === this.pessoaSelecionadaId) || null;
+  selecionarProduto(produtoId: string): void {
+    this.produtoSelecionadoId = produtoId;
+    this.fecharDropdownProduto();
   }
 
   adicionarAoCarrinho(): void {
@@ -371,6 +456,11 @@ export class TransacoesComponent implements OnInit {
       credito: 'Crédito'
     };
     return map[tipo] || tipo;
+  }
+
+  getProdutoNome(produtoId: string): string {
+    const produto = this.produtos.find(p => p.id.toString() === produtoId);
+    return produto ? produto.nome : '';
   }
 
   trackByIndex(index: number): number {
