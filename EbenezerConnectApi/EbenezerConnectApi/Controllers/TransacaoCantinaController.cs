@@ -16,11 +16,22 @@ namespace EbenezerConnectApi.Controllers
             _service = service;
         }
 
-        [HttpPost("registrar")]
-        public async Task<IActionResult> RegistrarTransacao([FromBody] RegistrarTransacaoDto dto)
+    [HttpPost("registrar")]
+    public async Task<IActionResult> RegistrarTransacao([FromBody] RegistrarTransacaoDto dto)
+    {
+        try
         {
-            var sucesso = await _service.EfetuarTransacaoAsync(dto);
-            return sucesso ? Ok("Transação registrada com sucesso.") : BadRequest("Erro ao registrar transação.");
+            var (sucesso, mensagem) = await _service.EfetuarTransacaoAsync(dto);
+            
+            if (!sucesso)
+                return BadRequest(new { erro = mensagem });
+            
+            return Ok(new { mensagem = "Transação registrada com sucesso." });
         }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { erro = "Erro ao processar transação: " + ex.Message });
+        }
+    }
     }
 }

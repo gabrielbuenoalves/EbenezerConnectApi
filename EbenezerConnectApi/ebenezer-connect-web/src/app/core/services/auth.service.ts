@@ -12,8 +12,8 @@ import { environment } from '../../../environments/environment';
 export class AuthService {
   private apiUrl = `${environment.apiUrl}/auth`;
   private isBrowser: boolean;
-  private currentUserSubject = new BehaviorSubject<User | null>(this.getUserFromToken());
-  public currentUser$ = this.currentUserSubject.asObservable();
+  private currentUserSubject: BehaviorSubject<User | null>;
+  public currentUser$: Observable<User | null>;
 
   constructor(
     private http: HttpClient,
@@ -21,6 +21,11 @@ export class AuthService {
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
+    const initialUser = this.getUserFromToken();
+    this.currentUserSubject = new BehaviorSubject<User | null>(initialUser);
+    this.currentUser$ = this.currentUserSubject.asObservable();
+    
+    console.log('[AuthService] Inicializado com usuário:', initialUser);
   }
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
@@ -54,6 +59,8 @@ export class AuthService {
   }
 
   private setSession(authResult: LoginResponse): void {
+    console.log('[AuthService] setSession chamado com:', authResult);
+    
     if (this.isBrowser) {
       localStorage.setItem('token', authResult.token);
       const user: User = {
@@ -62,22 +69,33 @@ export class AuthService {
         email: authResult.email,
         funcao: authResult.funcao
       };
+      console.log('[AuthService] Salvando user no localStorage:', user);
       localStorage.setItem('user', JSON.stringify(user));
+      this.currentUserSubject.next(user);
+      console.log('[AuthService] currentUserSubject atualizado:', user);
     }
-    this.currentUserSubject.next({
-      id: authResult.id,
-      nome: authResult.nome,
-      email: authResult.email,
-      funcao: authResult.funcao
-    });
   }
 
   private getUserFromToken(): User | null {
     if (!this.isBrowser) {
+      console.log('[AuthService] getUserFromToken: não está em browser');
       return null;
     }
     const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
+    console.log('[AuthService] getUserFromToken - userStr do localStorage:', userStr);
+    
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        console.log('[AuthService] getUserFromToken - user parseado:', user);
+        return user;
+      } catch (e) {
+        console.error('[AuthService] Erro ao parsear user do localStorage:', e);
+        return null;
+      }
+    }
+    console.log('[AuthService] getUserFromToken - localStorage vazio');
+    return null;
   }
 
   getToken(): string | null {
@@ -92,11 +110,15 @@ export class AuthService {
   }
 
   getCurrentUser(): User | null {
-    return this.currentUserSubject.value;
+    const user = this.currentUserSubject.value;
+    console.log('[AuthService] getCurrentUser() chamado, retornando:', user);
+    return user;
   }
 
   isAdmin(): boolean {
     const user = this.getCurrentUser();
-    return user?.funcao === 'admin';
+    if (!user) return false;
+    const funcaoLower = user.funcao?.toLowerCase() || '';
+    return funcaoLower === 'admin' || funcaoLower === 'administrador';
   }
 }

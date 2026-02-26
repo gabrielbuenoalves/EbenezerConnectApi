@@ -17,11 +17,14 @@ namespace EbenezerConnectApi.Services
             _context = context;
         }
 
-        public async Task<bool> EfetuarTransacaoAsync(RegistrarTransacaoDto dto)
+        public async Task<(bool sucesso, string mensagem)> EfetuarTransacaoAsync(RegistrarTransacaoDto dto)
         {
             var pessoa = await _context.Pessoa.FindAsync(dto.PessoaId);
-            if (pessoa == null || dto.Itens == null || !dto.Itens.Any())
-                return false;
+            if (pessoa == null)
+                return (false, "Pessoa não encontrada.");
+            
+            if (dto.Itens == null || !dto.Itens.Any())
+                return (false, "Nenhum item foi adicionado à transação.");
 
             var produtosIds = dto.Itens.Select(i => i.ProdutoId).ToList();
             var produtos = await _context.Produto
@@ -33,8 +36,11 @@ namespace EbenezerConnectApi.Services
 
             foreach (var itemDto in dto.Itens)
             {
-                if (!produtos.TryGetValue(itemDto.ProdutoId, out var produto) || produto.QuantidadeEmEstoque < itemDto.Quantidade)
-                    return false;
+                if (!produtos.TryGetValue(itemDto.ProdutoId, out var produto))
+                    return (false, $"Produto com ID {itemDto.ProdutoId} não encontrado.");
+                
+                if (produto.QuantidadeEmEstoque < itemDto.Quantidade)
+                    return (false, $"Estoque insuficiente para {produto.Nome}. Disponível: {produto.QuantidadeEmEstoque}");
 
                 produto.QuantidadeEmEstoque -= itemDto.Quantidade;
 
@@ -62,7 +68,7 @@ namespace EbenezerConnectApi.Services
                     // saldo não é alterado
                     break;
                 default:
-                    return false;
+                    return (false, "Tipo de pagamento inválido.");
             }
 
             var transacao = new TransacaoCantina
@@ -76,7 +82,7 @@ namespace EbenezerConnectApi.Services
 
             await _context.TransacaoCantina.AddAsync(transacao);
             await _context.SaveChangesAsync();
-            return true;
+            return (true, "Transação registrada com sucesso.");
         }
     }
 }

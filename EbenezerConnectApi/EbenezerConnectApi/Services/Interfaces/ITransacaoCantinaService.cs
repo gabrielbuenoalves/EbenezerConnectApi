@@ -5,6 +5,6 @@ namespace EbenezerConnectApi.Services.Interfaces
 {
     public interface ITransacaoCantinaService
     {
-        Task<bool> EfetuarTransacaoAsync(RegistrarTransacaoDto dto);
+        Task<(bool sucesso, string mensagem)> EfetuarTransacaoAsync(RegistrarTransacaoDto dto);
     }
 }

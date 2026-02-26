@@ -58,7 +58,23 @@ namespace EbenezerConnectApi.Controllers
             if (pessoa == null)
                 return NotFound();
 
-            _mapper.Map(dto, pessoa);
+            // Campos que todos podem atualizar
+            pessoa.Nome = dto.Nome;
+            if (dto.QuartoId.HasValue)
+                pessoa.QuartoId = dto.QuartoId;
+
+            // Verificar se o usuário é admin antes de permitir atualizar campos sensíveis
+            var userFuncao = User.Claims.FirstOrDefault(c => c.Type == "funcao")?.Value;
+            if (userFuncao == "admin")
+            {
+                if (!string.IsNullOrEmpty(dto.Email))
+                    pessoa.Email = dto.Email;
+                if (!string.IsNullOrEmpty(dto.Cpf))
+                    pessoa.Cpf = dto.Cpf;
+                if (!string.IsNullOrEmpty(dto.Funcao))
+                    pessoa.Funcao = dto.Funcao;
+            }
+
             await _pessoaService.AtualizarPessoa(pessoa);
             return NoContent();
         }
@@ -76,8 +92,7 @@ namespace EbenezerConnectApi.Controllers
         public async Task<IActionResult> AdicionarCreditos([FromBody] AdicionarCreditoDto dto)
         {
             await _pessoaService.AdicionarCredito(dto.PessoaId, dto.Valor);
-            return Ok("Créditos adicionados com sucesso!");
-
+            return Ok(new { mensagem = "Créditos adicionados com sucesso!", sucesso = true });
         }
 
     }

@@ -4,15 +4,16 @@ export interface Pessoa {
   email: string;
   funcao: 'acampante' | 'conselheiro' | 'admin';
   cpf: string;
-  igreja?: string;
   saldo: number;
   quartoNome?: string;
 }
 
 export interface AtualizarPessoaDto {
   nome: string;
-  igreja?: string;
   quartoId?: number;
+  email?: string;
+  cpf?: string;
+  funcao?: string;
 }
 
 export interface AdicionarCreditoDto {

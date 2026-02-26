@@ -22,6 +22,36 @@ namespace EbenezerConnectApi.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("EbenezerConnectApi.Models.Entities.AdicaoSaldo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("DataAdicao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DataReversao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("PessoaId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Revertida")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<decimal>("Valor")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PessoaId");
+
+                    b.ToTable("AdicaoSaldo");
+                });
+
             modelBuilder.Entity("EbenezerConnectApi.Models.Entities.EmailConfirmacao", b =>
                 {
                     b.Property<int>("Id")
@@ -105,10 +135,6 @@ namespace EbenezerConnectApi.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<string>("Igreja")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -117,8 +143,8 @@ namespace EbenezerConnectApi.Migrations
                     b.Property<int?>("QuartoId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("Saldo")
-                        .HasColumnType("decimal(18, 2)");
+                    b.Property<double>("Saldo")
+                        .HasColumnType("double");
 
                     b.Property<string>("SenhaHash")
                         .IsRequired()
@@ -199,9 +225,6 @@ namespace EbenezerConnectApi.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Capacidade")
-                        .HasColumnType("int");
-
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -220,16 +243,17 @@ namespace EbenezerConnectApi.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("DataReversao")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime>("DataTransacao")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("Descricao")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
                     b.Property<int>("PessoaId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("Revertida")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Tipo")
                         .IsRequired()
@@ -244,6 +268,17 @@ namespace EbenezerConnectApi.Migrations
                     b.HasIndex("PessoaId");
 
                     b.ToTable("TransacaoCantina");
+                });
+
+            modelBuilder.Entity("EbenezerConnectApi.Models.Entities.AdicaoSaldo", b =>
+                {
+                    b.HasOne("EbenezerConnectApi.Models.Entities.Pessoa", "Pessoa")
+                        .WithMany()
+                        .HasForeignKey("PessoaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pessoa");
                 });
 
             modelBuilder.Entity("EbenezerConnectApi.Models.Entities.EmailConfirmacao", b =>
@@ -279,7 +314,7 @@ namespace EbenezerConnectApi.Migrations
             modelBuilder.Entity("EbenezerConnectApi.Models.Entities.Pessoa", b =>
                 {
                     b.HasOne("EbenezerConnectApi.Models.Entities.Quarto", "Quarto")
-                        .WithMany("Pessoas")
+                        .WithMany()
                         .HasForeignKey("QuartoId");
 
                     b.Navigation("Quarto");
@@ -287,13 +322,11 @@ namespace EbenezerConnectApi.Migrations
 
             modelBuilder.Entity("EbenezerConnectApi.Models.Entities.PrecoHistoricoProduto", b =>
                 {
-                    b.HasOne("EbenezerConnectApi.Models.Entities.Produto", "Produto")
+                    b.HasOne("EbenezerConnectApi.Models.Entities.Produto", null)
                         .WithMany("HistoricoPrecos")
                         .HasForeignKey("ProdutoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Produto");
                 });
 
             modelBuilder.Entity("EbenezerConnectApi.Models.Entities.TransacaoCantina", b =>
@@ -310,11 +343,6 @@ namespace EbenezerConnectApi.Migrations
             modelBuilder.Entity("EbenezerConnectApi.Models.Entities.Produto", b =>
                 {
                     b.Navigation("HistoricoPrecos");
-                });
-
-            modelBuilder.Entity("EbenezerConnectApi.Models.Entities.Quarto", b =>
-                {
-                    b.Navigation("Pessoas");
                 });
 
             modelBuilder.Entity("EbenezerConnectApi.Models.Entities.TransacaoCantina", b =>

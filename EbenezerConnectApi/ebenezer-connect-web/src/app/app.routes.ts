@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { MainLayoutComponent } from './shared/layouts/main-layout.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
@@ -20,26 +21,37 @@ export const routes: Routes = [
     ]
   },
   
-  // Protected Routes
+  // Protected Routes with Layout
   {
-    path: 'dashboard',
+    path: '',
+    component: MainLayoutComponent,
     canActivate: [authGuard],
-    loadComponent: () => import('./features/dashboard/pages/dashboard.component').then(m => m.DashboardComponent)
-  },
-  {
-    path: 'pessoas',
-    canActivate: [authGuard],
-    loadComponent: () => import('./features/pessoas/pages/pessoas-list.component').then(m => m.PessoasListComponent)
-  },
-  {
-    path: 'produtos',
-    canActivate: [authGuard],
-    loadComponent: () => import('./features/produtos/pages/produtos-list.component').then(m => m.ProdutosListComponent)
-  },
-  {
-    path: 'transacoes',
-    canActivate: [authGuard],
-    loadComponent: () => import('./features/transacoes/pages/transacoes.component').then(m => m.TransacoesComponent)
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/pages/dashboard.component').then(m => m.DashboardComponent)
+      },
+      {
+        path: 'pessoas',
+        loadComponent: () => import('./features/pessoas/pages/pessoas-list.component').then(m => m.PessoasListComponent)
+      },
+      {
+        path: 'produtos',
+        loadComponent: () => import('./features/produtos/pages/produtos-list.component').then(m => m.ProdutosListComponent)
+      },
+      {
+        path: 'transacoes',
+        loadComponent: () => import('./features/transacoes/pages/transacoes.component').then(m => m.TransacoesComponent)
+      },
+      {
+        path: 'adicionar-saldo',
+        loadComponent: () => import('./features/pessoas/pages/adicionar-saldo.component').then(m => m.AdicionarSaldoComponent)
+      },
+      {
+        path: 'controle-financeiro',
+        loadComponent: () => import('./features/financeiro/pages/controle-financeiro.component').then(m => m.ControleFinanceiroComponent)
+      }
+    ]
   },
   
   // Not found

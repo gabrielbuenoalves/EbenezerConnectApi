@@ -77,6 +77,13 @@ namespace EbenezerConnectApi.Repository
             {
                 pessoa.Saldo += (double)valor;
                 _context.Pessoa.Update(pessoa);
+                _context.AdicaoSaldo.Add(new AdicaoSaldo
+                {
+                    PessoaId = pessoa.Id,
+                    Valor = valor,
+                    DataAdicao = DateTime.UtcNow,
+                    Revertida = false
+                });
                 await _context.SaveChangesAsync();
             }
         }

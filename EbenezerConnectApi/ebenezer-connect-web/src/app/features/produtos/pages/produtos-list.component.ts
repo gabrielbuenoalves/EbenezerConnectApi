@@ -10,73 +10,71 @@ import { Produto, CriarProdutoDto } from '../../../core/models';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
   template: `
-    <div class="page-layout">
-      <div class="page-header">
-        <h1>Gerenciar Produtos</h1>
-        <button (click)="openModal()" class="btn-primary">+ Novo Produto</button>
-      </div>
+    <div class="page-header">
+      <h1>Gerenciar Produtos</h1>
+      <button (click)="openModal()" class="btn-primary">+ Novo Produto</button>
+    </div>
 
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Estoque</th>
-              <th>Preço Compra</th>
-              <th>Preço Venda</th>
-              <th>Margem</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let produto of produtos; trackBy: trackByProdutoId" [class.low-stock]="produto.quantidadeEmEstoque < 10">
-              <td>{{ produto.nome }}</td>
-              <td>
-                <span class="stock-badge" [class.low]="produto.quantidadeEmEstoque < 10">
-                  {{ produto.quantidadeEmEstoque }}
-                </span>
-              </td>
-              <td>R$ {{ produto.precoCompraAtual.toFixed(2) }}</td>
-              <td>R$ {{ produto.precoVendaAtual.toFixed(2) }}</td>
-              <td>{{ calcularMargem(produto) }}%</td>
-              <td>
-                <button (click)="editProduto(produto)" class="btn-sm btn-primary">Editar</button>
-                <button (click)="deleteProduto(produto.id)" class="btn-sm btn-danger">Remover</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Estoque</th>
+            <th>Preço Compra</th>
+            <th>Preço Venda</th>
+            <th>Margem</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let produto of produtos; trackBy: trackByProdutoId" [class.low-stock]="produto.quantidadeEmEstoque < 10">
+            <td>{{ produto.nome }}</td>
+            <td>
+              <span class="stock-badge" [class.low]="produto.quantidadeEmEstoque < 10">
+                {{ produto.quantidadeEmEstoque }}
+              </span>
+            </td>
+            <td>R$ {{ produto.precoCompraAtual.toFixed(2) }}</td>
+            <td>R$ {{ produto.precoVendaAtual.toFixed(2) }}</td>
+            <td>{{ calcularMargem(produto) }}%</td>
+            <td>
+              <button (click)="editProduto(produto)" class="btn-sm btn-primary">Editar</button>
+              <button (click)="deleteProduto(produto.id)" class="btn-sm btn-danger">Remover</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-      <!-- Modal -->
-      <div class="modal" *ngIf="showModal" (click)="closeModal()">
-        <div class="modal-content" (click)="$event.stopPropagation()">
-          <h3>{{ isEditing ? 'Editar Produto' : 'Novo Produto' }}</h3>
-          <form [formGroup]="produtoForm" (ngSubmit)="salvar()">
+    <!-- Modal -->
+    <div class="modal" *ngIf="showModal" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <h3>{{ isEditing ? 'Editar Produto' : 'Novo Produto' }}</h3>
+        <form [formGroup]="produtoForm" (ngSubmit)="salvar()">
+          <div class="form-group">
+            <label>Nome</label>
+            <input type="text" formControlName="nome" class="form-control" />
+          </div>
+          <div class="form-row">
             <div class="form-group">
-              <label>Nome</label>
-              <input type="text" formControlName="nome" class="form-control" />
+              <label>Quantidade</label>
+              <input type="number" formControlName="quantidadeEstoque" class="form-control" />
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Quantidade</label>
-                <input type="number" formControlName="quantidadeEstoque" class="form-control" />
-              </div>
-              <div class="form-group">
-                <label>Preço Compra</label>
-                <input type="number" formControlName="precoCompra" class="form-control" step="0.01" />
-              </div>
-              <div class="form-group">
-                <label>Preço Venda</label>
-                <input type="number" formControlName="precoVenda" class="form-control" step="0.01" />
-              </div>
+            <div class="form-group">
+              <label>Preço Compra</label>
+              <input type="number" formControlName="precoCompra" class="form-control" step="0.01" />
             </div>
-            <div class="modal-actions">
-              <button type="button" (click)="closeModal()" class="btn-secondary">Cancelar</button>
-              <button type="submit" class="btn-primary" [disabled]="produtoForm.invalid">Salvar</button>
+            <div class="form-group">
+              <label>Preço Venda</label>
+              <input type="number" formControlName="precoVenda" class="form-control" step="0.01" />
             </div>
-          </form>
-        </div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" (click)="closeModal()" class="btn-secondary">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="produtoForm.invalid">Salvar</button>
+          </div>
+        </form>
       </div>
     </div>
   `,

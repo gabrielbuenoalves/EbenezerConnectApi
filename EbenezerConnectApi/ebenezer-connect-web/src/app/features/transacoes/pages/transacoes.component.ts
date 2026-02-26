@@ -12,17 +12,23 @@ interface ItemCarrinho extends ItemTransacaoDto {
   precoUnitario?: number;
 }
 
+interface ResumoCompra {
+  pessoaNome: string;
+  tipoPagamento: string;
+  itens: ItemCarrinho[];
+  total: number;
+}
+
 @Component({
   selector: 'app-transacoes',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
-    <div class="page-layout">
-      <div class="page-header">
-        <h1>Nova Transação - Cantina</h1>
-      </div>
+    <div class="page-header">
+      <h1>Cantina</h1>
+    </div>
 
-      <div class="transacao-container">
+    <div class="transacao-container">
         <div class="left-panel">
           <div class="card">
             <h3>Selecionar Pessoa</h3>
@@ -97,6 +103,41 @@ interface ItemCarrinho extends ItemTransacaoDto {
           </div>
         </div>
       </div>
+
+    <div class="modal" *ngIf="modalAberta">
+      <div class="modal-content">
+        <h2>Confirmar Compra</h2>
+        <div *ngIf="resumoCompra" class="resumo">
+          <div class="info-pessoas">
+            <p><strong>Pessoa:</strong> {{ resumoCompra.pessoaNome }}</p>
+            <p><strong>Forma de Pagamento:</strong> {{ formatarTipoPagamento(resumoCompra.tipoPagamento) }}</p>
+          </div>
+
+          <div class="itens-lista">
+            <h4>Produtos:</h4>
+            <div *ngFor="let item of resumoCompra.itens" class="item-resumo">
+              <div class="item-detalhes">
+                <span class="produto-nome">{{ item.produtoNome }}</span>
+                <span class="quantidade-preco">{{ item.quantidade }}x R$ {{ item.precoUnitario?.toFixed(2) }}</span>
+              </div>
+              <div class="subtotal">
+                R$ {{ (item.quantidade * (item.precoUnitario || 0)).toFixed(2) }}
+              </div>
+            </div>
+          </div>
+
+          <div class="total-resumo">
+            <strong>Total: R$ {{ resumoCompra.total.toFixed(2) }}</strong>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button (click)="cancelarCompra()" class="btn-secondary">Cancelar</button>
+          <button (click)="confirmarCompra()" class="btn-primary" [disabled]="processandoTransacao">
+            {{ processandoTransacao ? 'Processando...' : 'Confirmar' }}
+          </button>
+        </div>
+      </div>
     </div>
   `,
   styleUrls: ['./transacoes.component.scss']
@@ -110,6 +151,9 @@ export class TransacoesComponent implements OnInit {
   quantidade: number = 1;
   tipoPagamento: 'saldo' | 'avista' = 'saldo';
   carrinho: ItemCarrinho[] = [];
+  modalAberta: boolean = false;
+  resumoCompra: ResumoCompra | null = null;
+  processandoTransacao: boolean = false;
 
   constructor(
     private transacaoService: TransacaoService,
@@ -156,23 +200,58 @@ export class TransacoesComponent implements OnInit {
     const produto = this.produtos.find(p => p.id.toString() === this.produtoSelecionadoId);
     if (!produto) return;
 
-    if (produto.quantidadeEmEstoque < this.quantidade) {
-      alert('Estoque insuficiente');
+    // Calcula a quantidade total deste produto já no carrinho
+    const quantidadeNoCarrinho = this.carrinho
+      .filter(item => item.produtoId === produto.id)
+      .reduce((sum, item) => sum + item.quantidade, 0);
+
+    // Calcula o estoque disponível real (mostrado + no carrinho)
+    const quantidadeDisponivel = produto.quantidadeEmEstoque + quantidadeNoCarrinho;
+
+    // Valida se a quantidade total (carrinho + nova) não excede o estoque disponível
+    const quantidadeTotal = quantidadeNoCarrinho + this.quantidade;
+    if (quantidadeDisponivel < quantidadeTotal) {
+      alert(
+        `Estoque insuficiente! Disponível: ${quantidadeDisponivel} unidades. ` +
+        `Você já possui ${quantidadeNoCarrinho} no carrinho. ` +
+        `Pode adicionar apenas ${Math.max(0, quantidadeDisponivel - quantidadeNoCarrinho)} unidades.`
+      );
       return;
     }
 
-    this.carrinho.push({
-      produtoId: produto.id,
-      quantidade: this.quantidade,
-      produtoNome: produto.nome,
-      precoUnitario: produto.precoVendaAtual
-    });
+    // Procura se o produto já existe no carrinho
+    const itemExistente = this.carrinho.find(item => item.produtoId === produto.id);
+
+    if (itemExistente) {
+      // Se existe, incrementa a quantidade
+      itemExistente.quantidade += this.quantidade;
+    } else {
+      // Se não existe, adiciona novo
+      this.carrinho.push({
+        produtoId: produto.id,
+        quantidade: this.quantidade,
+        produtoNome: produto.nome,
+        precoUnitario: produto.precoVendaAtual
+      });
+    }
+
+    // Decrementa a quantidade do produto na lista
+    produto.quantidadeEmEstoque -= this.quantidade;
 
     this.quantidade = 1;
     this.produtoSelecionadoId = '';
   }
 
   removerDoCarrinho(index: number): void {
+    const itemRemovido = this.carrinho[index];
+    
+    // Encontra o produto original na lista e incrementa a quantidade
+    const produto = this.produtos.find(p => p.id === itemRemovido.produtoId);
+    if (produto) {
+      produto.quantidadeEmEstoque += itemRemovido.quantidade;
+    }
+
+    // Remove do carrinho
     this.carrinho.splice(index, 1);
   }
 
@@ -183,13 +262,32 @@ export class TransacoesComponent implements OnInit {
   podeFinalizara(): boolean {
     return !!(
       this.pessoaSelecionada && 
-      this.carrinho.length > 0 && 
-      (this.tipoPagamento === 'avista' || this.calcularTotal() <= this.pessoaSelecionada.saldo)
+      this.carrinho.length > 0
     );
   }
 
   finalizarTransacao(): void {
     if (!this.podeFinalizara()) return;
+
+    this.resumoCompra = {
+      pessoaNome: this.pessoaSelecionada?.nome || '',
+      tipoPagamento: this.tipoPagamento,
+      itens: this.carrinho,
+      total: this.calcularTotal()
+    };
+
+    this.modalAberta = true;
+  }
+
+  cancelarCompra(): void {
+    this.modalAberta = false;
+    this.resumoCompra = null;
+  }
+
+  confirmarCompra(): void {
+    if (!this.podeFinalizara()) return;
+
+    this.processandoTransacao = true;
 
     const transacao = {
       pessoaId: parseInt(this.pessoaSelecionadaId),
@@ -203,14 +301,36 @@ export class TransacoesComponent implements OnInit {
     this.transacaoService.registrarTransacao(transacao).subscribe({
       next: () => {
         alert('Transação realizada com sucesso!');
+        this.processandoTransacao = false;
+        this.modalAberta = false;
+        this.resumoCompra = null;
         this.carrinho = [];
         this.pessoaSelecionadaId = '';
         this.pessoaSelecionada = null;
         this.loadPessoas();
         this.loadProdutos();
       },
-      error: (err) => alert('Erro ao realizar transação: ' + err.message)
+      error: (err) => {
+        this.processandoTransacao = false;
+        let mensagemErro = 'Erro ao realizar transação';
+        if (err.error && err.error.erro) {
+          mensagemErro = err.error.erro;
+        } else if (err.message) {
+          mensagemErro = err.message;
+        }
+        alert(mensagemErro);
+        console.error('Erro na transação:', err);
+      }
     });
+  }
+
+  formatarTipoPagamento(tipo: string): string {
+    const map: Record<string, string> = {
+      saldo: 'Pagar com Saldo',
+      avista: 'Pagar à Vista',
+      credito: 'Crédito'
+    };
+    return map[tipo] || tipo;
   }
 
   trackByIndex(index: number): number {

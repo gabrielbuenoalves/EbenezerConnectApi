@@ -11,6 +11,7 @@ namespace EbenezerConnectApi.Repository
         }
         public DbSet<Pessoa> Pessoa { get; set; } // Tabela Pessoas
         public DbSet<TransacaoCantina> TransacaoCantina { get; set; }
+        public DbSet<AdicaoSaldo> AdicaoSaldo { get; set; }
         public DbSet<EmailConfirmacao> EmailConfirmacao { get; set; }
         public DbSet<Quarto> Quarto { get; set; }
         public DbSet<Produto> Produto { get; set; }

@@ -23,10 +23,11 @@ namespace EbenezerConnectApi.Services
 
             var claims = new[]
             {
-            new Claim(ClaimTypes.NameIdentifier, pessoa.Id.ToString()),
-            new Claim(ClaimTypes.Email, pessoa.Email),
-            new Claim(ClaimTypes.Role, pessoa.Funcao)
-        };
+                new Claim(ClaimTypes.NameIdentifier, pessoa.Id.ToString()),
+                new Claim(ClaimTypes.Email, pessoa.Email),
+                new Claim(ClaimTypes.Role, pessoa.Funcao),
+                new Claim("funcao", pessoa.Funcao) // Adicionar claim customizado também
+            };
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],

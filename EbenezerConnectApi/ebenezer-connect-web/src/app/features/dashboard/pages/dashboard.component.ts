@@ -1,187 +1,225 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
+import { RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { PessoaService } from '../../../core/services/pessoa.service';
 import { ProdutoService } from '../../../core/services/produto.service';
-import { User } from '../../../core/models';
+import { FinanceiroService } from '../../../core/services/financeiro.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="dashboard-layout">
-      <!-- Sidebar -->
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <h2>Ebenezer</h2>
-        </div>
-        
-        <nav class="sidebar-nav">
-          <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
-            <span class="icon">📊</span>
-            <span>Dashboard</span>
-          </a>
-          <a routerLink="/pessoas" routerLinkActive="active" class="nav-item">
-            <span class="icon">👥</span>
-            <span>Pessoas</span>
-          </a>
-          <a routerLink="/produtos" routerLinkActive="active" class="nav-item">
-            <span class="icon">📦</span>
-            <span>Produtos</span>
-          </a>
-          <a routerLink="/transacoes" routerLinkActive="active" class="nav-item">
-            <span class="icon">💳</span>
-            <span>Transações</span>
-          </a>
-        </nav>
+    <div class="page-header">
+      <h1>Dashboard</h1>
+      <p>Bem-vindo ao sistema Ebenezer Connect</p>
+    </div>
 
-        <div class="sidebar-footer">
-          <div class="user-info">
-            <div class="user-avatar">{{ userInitials }}</div>
-            <div class="user-details">
-              <div class="user-name">{{ currentUser?.nome }}</div>
-              <div class="user-role">{{ getRoleName(currentUser?.funcao) }}</div>
-            </div>
-          </div>
-          <button (click)="logout()" class="btn-logout">Sair</button>
-        </div>
-      </aside>
-
-      <!-- Main Content -->
-      <main class="main-content">
-        <div class="page-header">
-          <h1>Dashboard</h1>
-          <p>Bem-vindo ao sistema Ebenezer Connect</p>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon acampantes">👥</div>
-            <div class="stat-info">
-              <h3>{{ stats.acampantes }}</h3>
-              <p>Acampantes</p>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon conselheiros">🎯</div>
-            <div class="stat-info">
-              <h3>{{ stats.conselheiros }}</h3>
-              <p>Conselheiros</p>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon produtos">📦</div>
-            <div class="stat-info">
-              <h3>{{ stats.produtos }}</h3>
-              <p>Produtos</p>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon estoque-baixo">⚠️</div>
-            <div class="stat-info">
-              <h3>{{ stats.produtosBaixoEstoque }}</h3>
-              <p>Estoque Baixo</p>
-            </div>
+    <!-- Seção de Pessoas -->
+    <div class="section">
+      <div class="section-header">
+        <h2>👥 Pessoas</h2>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon acampantes">👥</div>
+          <div class="stat-info">
+            <h3>{{ stats.acampantes }}</h3>
+            <p>Acampantes</p>
           </div>
         </div>
 
-        <div class="quick-actions">
-          <h2>Ações Rápidas</h2>
-          <div class="actions-grid">
-            <button class="action-btn" routerLink="/pessoas">
-              <span class="action-icon">👤</span>
-              <span>Gerenciar Pessoas</span>
-            </button>
-            <button class="action-btn" routerLink="/produtos">
-              <span class="action-icon">📦</span>
-              <span>Gerenciar Produtos</span>
-            </button>
-            <button class="action-btn" routerLink="/transacoes">
-              <span class="action-icon">💳</span>
-              <span>Nova Transação</span>
-            </button>
+        <div class="stat-card">
+          <div class="stat-icon conselheiros">🎯</div>
+          <div class="stat-info">
+            <h3>{{ stats.conselheiros }}</h3>
+            <p>Conselheiros</p>
           </div>
         </div>
-      </main>
+
+        <div class="stat-card">
+          <div class="stat-icon total">👤</div>
+          <div class="stat-info">
+            <h3>{{ stats.acampantes + stats.conselheiros }}</h3>
+            <p>Total de Pessoas</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção de Produtos e Estoque -->
+    <div class="section">
+      <div class="section-header">
+        <h2>📦 Produtos e Estoque</h2>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon produtos">📦</div>
+          <div class="stat-info">
+            <h3>{{ stats.produtos }}</h3>
+            <p>Produtos Cadastrados</p>
+          </div>
+        </div>
+
+        <div class="stat-card" [class.alert]="stats.produtosBaixoEstoque > 0">
+          <div class="stat-icon estoque-baixo">⚠️</div>
+          <div class="stat-info">
+            <h3>{{ stats.produtosBaixoEstoque }}</h3>
+            <p>Estoque Baixo</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção de Cantina e Financeiro -->
+    <div class="section">
+      <div class="section-header">
+        <h2>💳 Cantina e Financeiro</h2>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card" [class.alert]="stats.saldoDevedor > 0">
+          <div class="stat-icon saldo-devedor">⚠️</div>
+          <div class="stat-info">
+            <h3>{{ stats.saldoDevedor | currency:'BRL' }}</h3>
+            <p>Saldo Devedor</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon lucro">💰</div>
+          <div class="stat-info">
+            <h3>{{ stats.lucro | currency:'BRL' }}</h3>
+            <p>Lucro</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon vendas">🛒</div>
+          <div class="stat-info">
+            <h3>{{ stats.quantidadeVendas }}</h3>
+            <p>Quantidade de Vendas</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon saldo-nao-utilizado">💵</div>
+          <div class="stat-info">
+            <h3>{{ stats.saldoNaoUtilizado | currency:'BRL' }}</h3>
+            <p>Saldo Não Utilizado</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção de Ações Rápidas -->
+    <div class="section">
+      <div class="section-header">
+        <h2>⚡ Ações Rápidas</h2>
+      </div>
+      <div class="actions-grid">
+        <button class="action-card" routerLink="/pessoas">
+          <span class="action-icon">👤</span>
+          <div class="action-content">
+            <h3>Gerenciar Pessoas</h3>
+            <p>Cadastro e edição</p>
+          </div>
+        </button>
+        <button class="action-card" routerLink="/produtos">
+          <span class="action-icon">📦</span>
+          <div class="action-content">
+            <h3>Gerenciar Produtos</h3>
+            <p>Estoque e preços</p>
+          </div>
+        </button>
+        <button class="action-card" routerLink="/transacoes">
+          <span class="action-icon">🛒</span>
+          <div class="action-content">
+            <h3>Nova Venda</h3>
+            <p>Registrar transação</p>
+          </div>
+        </button>
+        <button class="action-card" routerLink="/adicionar-saldo">
+          <span class="action-icon">💰</span>
+          <div class="action-content">
+            <h3>Adicionar Saldo</h3>
+            <p>Creditar valor</p>
+          </div>
+        </button>
+      </div>
     </div>
   `,
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
-  currentUser: User | null = null;
-  userInitials: string = '';
   stats = {
     acampantes: 0,
     conselheiros: 0,
     produtos: 0,
-    produtosBaixoEstoque: 0
+    produtosBaixoEstoque: 0,
+    saldoDevedor: 0,
+    lucro: 0,
+    quantidadeVendas: 0,
+    saldoNaoUtilizado: 0
   };
 
   constructor(
-    private authService: AuthService,
     private pessoaService: PessoaService,
     private produtoService: ProdutoService,
-    private router: Router,
+    private financeiroService: FinanceiroService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.currentUser = this.authService.getCurrentUser();
-    this.userInitials = this.getInitials(this.currentUser?.nome || '');
     this.loadStats();
   }
 
   loadStats(): void {
-    this.pessoaService.getByFuncao('acampante').subscribe({
+    // Carregar todos os dados em paralelo
+    forkJoin({
+      acampantes: this.pessoaService.getByFuncao('acampante'),
+      conselheiros: this.pessoaService.getByFuncao('conselheiro'),
+      produtos: this.produtoService.getAll(),
+      historico: this.financeiroService.getHistorico(),
+      todasPessoas: this.pessoaService.getAll()
+    }).subscribe({
       next: (data) => {
-        this.stats.acampantes = data.length;
+        // Estatísticas de pessoas
+        this.stats.acampantes = data.acampantes.length;
+        this.stats.conselheiros = data.conselheiros.length;
+
+        // Estatísticas de produtos
+        this.stats.produtos = data.produtos.length;
+        this.stats.produtosBaixoEstoque = data.produtos.filter(p => p.quantidadeEmEstoque < 10).length;
+
+        // Estatísticas financeiras
+        // Quantidade de vendas
+        this.stats.quantidadeVendas = data.historico.filter(
+          h => h.tipo === 'cantina' && !h.revertida
+        ).length;
+
+        // Saldo não utilizado (saldo positivo que as pessoas têm)
+        this.stats.saldoNaoUtilizado = data.todasPessoas
+          .filter(p => p.saldo > 0)
+          .reduce((acc, p) => acc + p.saldo, 0);
+
+        // Total de vendas
+        const totalVendas = data.historico
+          .filter(h => h.tipo === 'cantina' && !h.revertida)
+          .reduce((acc, h) => acc + h.valor, 0);
+
+        // Saldo devedor (pessoas com saldo negativo)
+        this.stats.saldoDevedor = data.todasPessoas
+          .filter(p => p.saldo < 0)
+          .reduce((acc, p) => acc + Math.abs(p.saldo), 0);
+
+        // Lucro = Vendas - Saldo Devedor
+        // Quando o saldo devedor é quitado, ele se torna lucro
+        this.stats.lucro = totalVendas - this.stats.saldoDevedor;
+
         this.cdr.detectChanges();
       },
       error: (err) => console.error(err)
     });
-
-    this.pessoaService.getByFuncao('conselheiro').subscribe({
-      next: (data) => {
-        this.stats.conselheiros = data.length;
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error(err)
-    });
-
-    this.produtoService.getAll().subscribe({
-      next: (data) => {
-        this.stats.produtos = data.length;
-        this.stats.produtosBaixoEstoque = data.filter(p => p.quantidadeEmEstoque < 10).length;
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error(err)
-    });
-  }
-
-  getInitials(name: string): string {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  }
-
-  getRoleName(role?: string): string {
-    const roles: any = {
-      'acampante': 'Acampante',
-      'conselheiro': 'Conselheiro',
-      'admin': 'Administrador'
-    };
-    return roles[role || ''] || '';
-  }
-
-  logout(): void {
-    this.authService.logout();
   }
 }

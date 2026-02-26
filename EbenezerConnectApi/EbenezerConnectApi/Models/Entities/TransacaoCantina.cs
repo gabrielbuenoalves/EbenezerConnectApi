@@ -23,6 +23,10 @@ namespace EbenezerConnectApi.Models.Entities
         [MaxLength(50)]
         public string Tipo { get; set; } = string.Empty; // saldo / avista / pendente
 
+        public bool Revertida { get; set; } = false;
+
+        public DateTime? DataReversao { get; set; }
+
         [ForeignKey("PessoaId")]
         public Pessoa Pessoa { get; set; } = null!;
 

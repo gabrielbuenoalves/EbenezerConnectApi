@@ -54,7 +54,11 @@ namespace EbenezerConnectApi.Controllers
                 var pessoa = _mapper.Map<Pessoa>(dto);
                 await _usuarioService.Cadastrar(pessoa, dto.Senha);
 
-                return Ok("Cadastro realizado com sucesso! Verifique seu e-mail para confirmar.");
+                return Ok(new
+                {
+                    sucesso = true,
+                    mensagem = "Cadastro realizado com sucesso! Verifique seu e-mail para confirmar."
+                });
             }
             catch (Exception ex)
             {
