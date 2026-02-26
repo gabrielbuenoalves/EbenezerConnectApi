@@ -20,6 +20,13 @@ namespace EbenezerConnectApi.Repository
                 .FirstOrDefaultAsync(p => p.Email == email);
         }
 
+        public async Task<Pessoa?> BuscarPorCpf(string cpf)
+        {
+            return await _context.Pessoa
+                .Include(p => p.Quarto)
+                .FirstOrDefaultAsync(p => p.Cpf == cpf);
+        }
+
         public async Task<Pessoa?> ObterPorId(int id)
         {
             return await _context.Pessoa

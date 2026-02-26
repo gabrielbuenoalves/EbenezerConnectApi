@@ -42,7 +42,8 @@ namespace EbenezerConnectApi.Controllers
             _logger = logger;
             _env = env;
         }
-        [AllowAnonymous]
+        
+        [Authorize(Roles = "admin,conselheiro")]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto dto)
         {

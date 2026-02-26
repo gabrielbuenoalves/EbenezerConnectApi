@@ -6,6 +6,7 @@ namespace EbenezerConnectApi.Repository.Interfaces
     public interface IPessoaRepository
     {
         Task<Pessoa?> BuscarPorEmail(string email);
+        Task<Pessoa?> BuscarPorCpf(string cpf);
         Task<Pessoa?> ObterPorId(int id);
         Task<List<Pessoa>> ObterTodasPessoas();
         Task<List<Pessoa>> ObterPorFuncao(string funcao);

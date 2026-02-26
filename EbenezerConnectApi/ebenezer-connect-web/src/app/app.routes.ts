@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { adminConselheiroGuard } from './core/guards/admin-conselheiro.guard';
 import { MainLayoutComponent } from './shared/layouts/main-layout.component';
 
 export const routes: Routes = [
@@ -16,6 +17,7 @@ export const routes: Routes = [
       },
       {
         path: 'register',
+        canActivate: [authGuard, adminConselheiroGuard],
         loadComponent: () => import('./features/auth/pages/register.component').then(m => m.RegisterComponent)
       }
     ]
@@ -34,6 +36,11 @@ export const routes: Routes = [
       {
         path: 'pessoas',
         loadComponent: () => import('./features/pessoas/pages/pessoas-list.component').then(m => m.PessoasListComponent)
+      },
+      {
+        path: 'pessoas/importar',
+        loadComponent: () => import('./features/pessoas/pages/importar-pessoas.component').then(m => m.ImportarPessoasComponent),
+        canActivate: [adminConselheiroGuard]
       },
       {
         path: 'produtos',

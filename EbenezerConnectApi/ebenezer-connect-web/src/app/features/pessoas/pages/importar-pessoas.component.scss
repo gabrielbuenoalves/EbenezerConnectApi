@@ -1,0 +1,247 @@
+.import-container {
+  @apply min-h-screen flex items-center justify-center p-6 bg-gray-50;
+}
+
+.import-card {
+  @apply bg-white rounded-xl shadow-lg p-8 w-full max-w-4xl;
+}
+
+.header {
+  @apply text-center mb-8;
+
+  h1 {
+    @apply text-3xl font-bold text-gray-800 mb-2;
+  }
+
+  p {
+    @apply text-gray-600;
+  }
+}
+
+.instructions {
+  @apply mb-8 bg-blue-50 p-6 rounded-lg;
+
+  h3 {
+    @apply text-lg font-semibold text-blue-900 mb-3;
+  }
+
+  ol {
+    @apply list-decimal list-inside mb-4 space-y-2 text-gray-700;
+  }
+
+  a {
+    @apply text-blue-600 hover:text-blue-800 underline;
+  }
+}
+
+.info-box {
+  @apply mt-4 p-4 bg-white rounded border border-blue-200;
+
+  strong {
+    @apply text-gray-800 block mb-2;
+  }
+
+  ul {
+    @apply list-disc list-inside space-y-1 text-gray-600 text-sm mb-3;
+  }
+
+  .note {
+    @apply text-sm text-amber-700 bg-amber-50 p-3 rounded mt-3;
+  }
+}
+
+.upload-area {
+  @apply border-2 border-dashed border-gray-300 rounded-lg p-12 text-center;
+  @apply transition-colors cursor-pointer;
+
+  &:hover {
+    @apply border-indigo-400 bg-indigo-50;
+  }
+
+  &.drag-over {
+    @apply border-indigo-500 bg-indigo-100;
+  }
+}
+
+.upload-content {
+  @apply flex flex-col items-center gap-4;
+
+  .upload-icon {
+    @apply text-gray-400;
+  }
+
+  p {
+    @apply text-gray-600;
+  }
+
+  .btn-select {
+    @apply px-6 py-2 bg-indigo-600 text-white rounded-lg;
+    @apply hover:bg-indigo-700 transition;
+  }
+}
+
+.file-selected {
+  @apply flex flex-col items-center gap-3;
+
+  .file-icon {
+    @apply text-indigo-600;
+  }
+
+  .file-name {
+    @apply text-lg font-medium text-gray-800;
+  }
+
+  .file-size {
+    @apply text-sm text-gray-500;
+  }
+
+  .btn-remove {
+    @apply px-4 py-2 bg-red-100 text-red-700 rounded;
+    @apply hover:bg-red-200 transition;
+  }
+}
+
+.loading {
+  @apply flex flex-col items-center gap-3 my-6;
+
+  .spinner {
+    @apply w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin;
+  }
+
+  p {
+    @apply text-gray-600;
+  }
+}
+
+.error-message {
+  @apply bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded my-4;
+}
+
+.success-message {
+  @apply bg-green-50 border-l-4 border-green-500 px-4 py-4 rounded-r-lg my-4;
+  @apply shadow-md bg-gradient-to-r from-green-50 to-white;
+  animation: slideDown 0.3s ease-in-out;
+
+  .success-content {
+    @apply flex items-flex-start gap-4;
+  }
+
+  .success-icon {
+    @apply text-2xl font-bold text-green-600 flex-shrink-0 mt-1;
+    animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .success-text {
+    @apply flex-1;
+
+    strong {
+      @apply block text-lg font-semibold text-green-800 mb-1;
+    }
+
+    p {
+      @apply text-green-700 text-sm;
+    }
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.resultado {
+  @apply mt-6 p-6 bg-gray-50 rounded-lg;
+
+  h3 {
+    @apply text-xl font-semibold text-gray-800 mb-4;
+  }
+}
+
+.resultado-stats {
+  @apply grid grid-cols-3 gap-4 mb-6;
+
+  .stat {
+    @apply bg-white p-4 rounded-lg shadow-sm;
+
+    .label {
+      @apply block text-sm text-gray-600 mb-1;
+    }
+
+    .value {
+      @apply block text-2xl font-bold text-gray-800;
+    }
+
+    &.success .value {
+      @apply text-green-600;
+    }
+
+    &.error .value {
+      @apply text-red-600;
+    }
+  }
+}
+
+.mensagens {
+  @apply mt-4;
+
+  h4 {
+    @apply text-lg font-semibold text-gray-700 mb-3;
+  }
+}
+
+.mensagens-list {
+  @apply max-h-96 overflow-y-auto space-y-2;
+}
+
+.mensagem {
+  @apply p-3 rounded text-sm;
+
+  &.msg-erro {
+    @apply bg-red-50 text-red-700 border border-red-200;
+  }
+
+  &.msg-sucesso {
+    @apply bg-green-50 text-green-700 border border-green-200;
+  }
+
+  &:not(.msg-erro):not(.msg-sucesso) {
+    @apply bg-blue-50 text-blue-700 border border-blue-200;
+  }
+}
+
+.actions {
+  @apply flex gap-4 mt-8;
+
+  button {
+    @apply flex-1 py-3 rounded-lg font-medium transition;
+  }
+
+  .btn-primary {
+    @apply bg-indigo-600 text-white hover:bg-indigo-700;
+
+    &:disabled {
+      @apply bg-gray-300 text-gray-500 cursor-not-allowed;
+    }
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-700 hover:bg-gray-300;
+  }
+}

@@ -35,4 +35,14 @@ export class PessoaService {
   adicionarCredito(data: AdicionarCreditoDto): Observable<any> {
     return this.http.post(`${this.apiUrl}/creditos`, data);
   }
+
+  importarExcel(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('arquivo', file);
+    return this.http.post(`${this.apiUrl}/importar-excel`, formData);
+  }
+
+  importarPessoasJson(dados: any[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/importar-json`, dados);
+  }
 }

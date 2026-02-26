@@ -13,11 +13,13 @@ namespace EbenezerConnectApi.Controllers
     public class PessoaController : ControllerBase
     {
         private readonly IPessoaService _pessoaService;
+        private readonly IImportacaoService _importacaoService;
         private readonly IMapper _mapper;
 
-        public PessoaController(IPessoaService pessoaService, IMapper mapper)
+        public PessoaController(IPessoaService pessoaService, IImportacaoService importacaoService, IMapper mapper)
         {
             _pessoaService = pessoaService;
+            _importacaoService = importacaoService;
             _mapper = mapper;
         }
 
@@ -95,5 +97,63 @@ namespace EbenezerConnectApi.Controllers
             return Ok(new { mensagem = "Créditos adicionados com sucesso!", sucesso = true });
         }
 
+        [Authorize(Roles = "admin,conselheiro")]
+        [HttpPost("importar-excel")]
+        public async Task<IActionResult> ImportarExcel([FromForm] IFormFile arquivo)
+        {
+            Console.WriteLine("[PessoaController] Requisição de importação recebida");
+            
+            if (arquivo == null || arquivo.Length == 0)
+            {
+                Console.WriteLine("[PessoaController] Erro: Arquivo vazio ou nulo");
+                return BadRequest(new { mensagem = "Nenhum arquivo foi enviado." });
+            }
+
+            Console.WriteLine($"[PessoaController] Arquivo: {arquivo.FileName}, Tamanho: {arquivo.Length} bytes");
+
+            if (!arquivo.FileName.EndsWith(".xlsx") && !arquivo.FileName.EndsWith(".xls"))
+            {
+                Console.WriteLine("[PessoaController] Erro: Formato inválido");
+                return BadRequest(new { mensagem = "Formato de arquivo inválido. Apenas arquivos Excel (.xlsx, .xls) são aceitos." });
+            }
+
+            try
+            {
+                Console.WriteLine("[PessoaController] Abrindo stream do arquivo...");
+                using var stream = arquivo.OpenReadStream();
+                
+                Console.WriteLine("[PessoaController] Chamando ImportarPessoasExcel...");
+                var resultado = await _importacaoService.ImportarPessoasExcel(stream);
+                
+                Console.WriteLine($"[PessoaController] Importação concluída. Importados: {resultado.Importados}, Erros: {resultado.Erros}");
+                Console.WriteLine($"[PessoaController] Enviando resposta JSON: {System.Text.Json.JsonSerializer.Serialize(resultado)}");
+
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PessoaController] EXCEÇÃO: {ex.GetType().Name} - {ex.Message}");
+                Console.WriteLine($"[PessoaController] Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { mensagem = $"Erro ao processar arquivo: {ex.Message}" });
+            }
+        }
+
+        [Authorize(Roles = "admin,conselheiro")]
+        [HttpPost("importar-json")]
+        public async Task<IActionResult> ImportarJson([FromBody] List<ImportacaoPessoaDto> dados)
+        {
+            if (dados == null || dados.Count == 0)
+                return BadRequest(new { mensagem = "Nenhum dado foi enviado." });
+
+            try
+            {
+                var resultado = await _importacaoService.ImportarPessoasJson(dados);
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensagem = $"Erro ao processar dados: {ex.Message}" });
+            }
+        }
     }
 }

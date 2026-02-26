@@ -13,16 +13,31 @@ import { Pessoa } from '../../../core/models';
   template: `
     <div class="page-header">
       <h1>Gerenciar Pessoas</h1>
-      <div class="filters">
-          <select [(ngModel)]="filtroFuncao" (change)="filtrar()" class="form-control">
-            <option value="">Todas as Funções</option>
-            <option value="acampante">Acampantes</option>
-            <option value="conselheiro">Conselheiros</option>
-            <option value="admin">Administradores</option>
-          </select>
-          <input type="text" [(ngModel)]="searchTerm" (input)="filtrar()" placeholder="Buscar..." class="form-control" />
-        </div>
+      <div class="header-actions">
+        <button 
+          *ngIf="isAdminOrConselheiro" 
+          routerLink="/pessoas/importar" 
+          class="btn-primary">
+          📥 Importar via Excel
+        </button>
+        <button 
+          *ngIf="isAdminOrConselheiro" 
+          (click)="abrirModalCadastro()" 
+          class="btn-primary">
+          ➕ Cadastrar Pessoa
+        </button>
       </div>
+    </div>
+    
+    <div class="filters">
+      <select [(ngModel)]="filtroFuncao" (change)="filtrar()" class="form-control">
+        <option value="">Todas as Funções</option>
+        <option value="acampante">Acampantes</option>
+        <option value="conselheiro">Conselheiros</option>
+        <option value="admin">Administradores</option>
+      </select>
+      <input type="text" [(ngModel)]="searchTerm" (input)="filtrar()" placeholder="Buscar..." class="form-control" />
+    </div>
 
       <div class="table-container">
         <div *ngIf="isLoading" class="loading-message">
@@ -58,6 +73,75 @@ import { Pessoa } from '../../../core/models';
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Modal para cadastrar pessoa -->
+      <div class="modal" *ngIf="showCadastroModal" (click)="closeCadastroModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <h3>Cadastrar Nova Pessoa</h3>
+          
+          <div class="info-message">
+            ℹ️ A senha temporária será gerada automaticamente usando os 6 primeiros dígitos do CPF.
+          </div>
+
+          <div class="form-group">
+            <label>Nome Completo <span class="required">*</span></label>
+            <input 
+              type="text" 
+              [(ngModel)]="novaPessoa.nome" 
+              class="form-control" 
+              placeholder="Digite o nome completo"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Email <span class="required">*</span></label>
+            <input 
+              type="email" 
+              [(ngModel)]="novaPessoa.email" 
+              class="form-control" 
+              placeholder="exemplo@email.com"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>CPF <span class="required">*</span></label>
+            <input 
+              type="text" 
+              [(ngModel)]="novaPessoa.cpf" 
+              class="form-control" 
+              placeholder="Apenas números (11 dígitos)" 
+              maxlength="11"
+              (input)="formatCpf($event)"
+            />
+            <small class="help-text">Será usado para gerar a senha temporária</small>
+          </div>
+
+          <div class="form-group">
+            <label>Função <span class="required">*</span></label>
+            <select [(ngModel)]="novaPessoa.funcao" class="form-control">
+              <option value="">Selecione...</option>
+              <option value="acampante">Acampante</option>
+              <option value="conselheiro">Conselheiro</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+
+          <div class="error-message" *ngIf="cadastroError">
+            {{ cadastroError }}
+          </div>
+
+          <div class="success-message" *ngIf="cadastroSucesso">
+            ✅ {{ cadastroSucesso }}
+          </div>
+
+          <div class="modal-actions">
+            <button (click)="closeCadastroModal()" class="btn-secondary" [disabled]="cadastrando">Cancelar</button>
+            <button (click)="confirmarCadastro()" class="btn-primary" [disabled]="cadastrando">
+              {{ cadastrando ? 'Cadastrando...' : 'Cadastrar' }}
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Modal para editar pessoa -->
@@ -108,6 +192,7 @@ export class PessoasListComponent implements OnInit {
   filtroFuncao: string = '';
   searchTerm: string = '';
   showEditModal: boolean = false;
+  showCadastroModal: boolean = false;
   pessoaSelecionada: Pessoa | null = null;
   isLoading: boolean = true;
   pessoaEdit: any = {
@@ -116,7 +201,17 @@ export class PessoasListComponent implements OnInit {
     cpf: '',
     funcao: ''
   };
+  novaPessoa: any = {
+    nome: '',
+    email: '',
+    cpf: '',
+    funcao: ''
+  };
+  cadastrando: boolean = false;
+  cadastroError: string = '';
+  cadastroSucesso: string = '';
   isAdmin: boolean = false;
+  isAdminOrConselheiro: boolean = false;
 
   constructor(
     private pessoaService: PessoaService,
@@ -132,12 +227,15 @@ export class PessoasListComponent implements OnInit {
     if (currentUser) {
       const funcaoLower = currentUser.funcao?.toLowerCase() || '';
       this.isAdmin = funcaoLower === 'admin' || funcaoLower === 'administrador';
+      this.isAdminOrConselheiro = funcaoLower === 'admin' || funcaoLower === 'administrador' || funcaoLower === 'conselheiro';
       console.log('[Pessoas-List] Funcao:', currentUser.funcao);
       console.log('[Pessoas-List] Funcao em lower:', funcaoLower);
       console.log('[Pessoas-List] É admin?', this.isAdmin);
+      console.log('[Pessoas-List] É admin ou conselheiro?', this.isAdminOrConselheiro);
     } else {
       console.log('[Pessoas-List] Nenhum usuário logado');
       this.isAdmin = false;
+      this.isAdminOrConselheiro = false;
     }
     
     this.isLoading = true;
@@ -287,5 +385,101 @@ export class PessoasListComponent implements OnInit {
 
   trackByPessoaId(index: number, pessoa: Pessoa): number {
     return pessoa.id;
+  }
+
+  abrirModalCadastro(): void {
+    this.novaPessoa = {
+      nome: '',
+      email: '',
+      cpf: '',
+      funcao: ''
+    };
+    this.cadastroError = '';
+    this.cadastroSucesso = '';
+    this.showCadastroModal = true;
+  }
+
+  closeCadastroModal(): void {
+    if (!this.cadastrando) {
+      this.showCadastroModal = false;
+      this.novaPessoa = {
+        nome: '',
+        email: '',
+        cpf: '',
+        funcao: ''
+      };
+      this.cadastroError = '';
+      this.cadastroSucesso = '';
+    }
+  }
+
+  formatCpf(event: any): void {
+    // Remove tudo que não for número
+    let value = event.target.value.replace(/\D/g, '');
+    event.target.value = value;
+    this.novaPessoa.cpf = value;
+  }
+
+  confirmarCadastro(): void {
+    this.cadastroError = '';
+    this.cadastroSucesso = '';
+
+    // Validações
+    if (!this.novaPessoa.nome || this.novaPessoa.nome.trim() === '') {
+      this.cadastroError = 'Nome é obrigatório';
+      return;
+    }
+
+    if (!this.novaPessoa.email || this.novaPessoa.email.trim() === '') {
+      this.cadastroError = 'Email é obrigatório';
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.novaPessoa.email)) {
+      this.cadastroError = 'Email inválido';
+      return;
+    }
+
+    if (!this.novaPessoa.cpf || this.novaPessoa.cpf.length !== 11) {
+      this.cadastroError = 'CPF deve conter 11 dígitos';
+      return;
+    }
+
+    if (!this.novaPessoa.funcao) {
+      this.cadastroError = 'Função é obrigatória';
+      return;
+    }
+
+    // Gera senha temporária (primeiros 6 dígitos do CPF)
+    const senhaTemporaria = this.novaPessoa.cpf.substring(0, 6);
+
+    const dadosCadastro = {
+      nome: this.novaPessoa.nome,
+      email: this.novaPessoa.email,
+      cpf: this.novaPessoa.cpf,
+      funcao: this.novaPessoa.funcao,
+      telefone: '',
+      senha: senhaTemporaria,
+      confirmarSenha: senhaTemporaria
+    };
+
+    this.cadastrando = true;
+    this.authService.register(dadosCadastro).subscribe({
+      next: (response) => {
+        this.cadastrando = false;
+        this.cadastroSucesso = `Pessoa cadastrada com sucesso! Senha temporária: ${senhaTemporaria}`;
+        
+        setTimeout(() => {
+          this.closeCadastroModal();
+          this.loadPessoas();
+        }, 3000);
+      },
+      error: (error) => {
+        this.cadastrando = false;
+        this.cadastroError = error.error?.mensagem || error.message || 'Erro ao cadastrar pessoa. Tente novamente.';
+        console.error('Erro no cadastro:', error);
+      }
+    });
   }
 }

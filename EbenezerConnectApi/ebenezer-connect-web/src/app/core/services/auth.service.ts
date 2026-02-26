@@ -121,4 +121,11 @@ export class AuthService {
     const funcaoLower = user.funcao?.toLowerCase() || '';
     return funcaoLower === 'admin' || funcaoLower === 'administrador';
   }
+
+  isAdminOrConselheiro(): boolean {
+    const user = this.getCurrentUser();
+    if (!user) return false;
+    const funcaoLower = user.funcao?.toLowerCase() || '';
+    return funcaoLower === 'admin' || funcaoLower === 'administrador' || funcaoLower === 'conselheiro';
+  }
 }

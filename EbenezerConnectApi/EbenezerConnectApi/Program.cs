@@ -89,6 +89,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<IProdutoService, ProdutoService>();
 builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
+builder.Services.AddScoped<IImportacaoService, ImportacaoService>();
 
 
 // Banco de dados

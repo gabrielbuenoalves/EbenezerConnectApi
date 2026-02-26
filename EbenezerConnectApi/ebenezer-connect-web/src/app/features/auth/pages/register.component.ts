@@ -152,6 +152,8 @@ export class RegisterComponent {
   errorMessage: string = '';
   successMessage: string = '';
   loading: boolean = false;
+  currentUser: any = null;
+  canRegister: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -167,6 +169,19 @@ export class RegisterComponent {
       senha: ['', [Validators.required, Validators.minLength(6)]],
       confirmarSenha: ['', Validators.required]
     }, { validators: this.passwordMatchValidator });
+
+    // Verifica se o usuário tem permissão para registrar
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      this.canRegister = !!(user && (user.funcao === 'admin' || user.funcao === 'conselheiro'));
+      
+      if (!this.canRegister && user) {
+        this.errorMessage = 'Você não tem permissão para acessar esta página.';
+        setTimeout(() => {
+          this.router.navigate(['/dashboard']);
+        }, 2000);
+      }
+    });
   }
 
   passwordMatchValidator(form: FormGroup) {
