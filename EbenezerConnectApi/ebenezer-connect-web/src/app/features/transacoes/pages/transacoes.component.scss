@@ -19,22 +19,10 @@
 }
 
 .search-input {
-  @apply mb-3 !important;
-  padding: 10px 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 14px;
-  width: 100%;
-
-  &::placeholder {
-    color: #999;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-  }
+  @apply w-full px-3 py-2 mb-3 border border-gray-300 rounded-md;
+  @apply text-sm text-gray-700 placeholder-gray-400;
+  @apply focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent;
+  @apply transition duration-150 ease-in-out;
 }
 
 .pessoa-info {

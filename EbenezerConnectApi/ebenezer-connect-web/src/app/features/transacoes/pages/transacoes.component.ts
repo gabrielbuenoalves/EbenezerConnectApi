@@ -34,9 +34,9 @@ interface ResumoCompra {
             <h3>Selecionar Pessoa</h3>
             <input 
               type="text" 
-              [(ngModel)]="pessoaBusca" 
-              (input)="filtrarPessoas()"
-              class="form-control search-input"
+              [(ngModel)]="pessoaBuscaTexto" 
+              (input)="atualizarPessoasFiltradas()"
+              class="search-input"
               placeholder="Buscar por nome..." />
             <select [(ngModel)]="pessoaSelecionadaId" (change)="selecionarPessoa()" class="form-control">
               <option value="">Selecione uma pessoa...</option>
@@ -54,9 +54,9 @@ interface ResumoCompra {
             <h3>Adicionar Produtos</h3>
             <input 
               type="text" 
-              [(ngModel)]="produtoBusca" 
-              (input)="filtrarProdutos()"
-              class="form-control search-input"
+              [(ngModel)]="produtoBuscaTexto" 
+              (input)="atualizarProdutosFiltrados()"
+              class="search-input"
               placeholder="Buscar por nome..." />
             <div class="produto-select">
               <select [(ngModel)]="produtoSelecionadoId" class="form-control">
@@ -161,9 +161,9 @@ export class TransacoesComponent implements OnInit {
   produtosFiltrados: Produto[] = [];
   pessoaSelecionadaId: string = '';
   pessoaSelecionada: Pessoa | null = null;
-  pessoaBusca: string = '';
+  pessoaBuscaTexto: string = '';
   produtoSelecionadoId: string = '';
-  produtoBusca: string = '';
+  produtoBuscaTexto: string = '';
   quantidade: number = 1;
   tipoPagamento: 'saldo' | 'avista' = 'saldo';
   carrinho: ItemCarrinho[] = [];
@@ -187,7 +187,7 @@ export class TransacoesComponent implements OnInit {
     this.pessoaService.getAll().subscribe({
       next: (data) => {
         this.pessoas = data;
-        this.filtrarPessoas();
+        this.atualizarPessoasFiltradas();
         this.cdr.detectChanges();
       },
       error: (err) => console.error(err)
@@ -198,31 +198,31 @@ export class TransacoesComponent implements OnInit {
     this.produtoService.getAll().subscribe({
       next: (data) => {
         this.produtos = data.filter(p => p.quantidadeEmEstoque > 0);
-        this.filtrarProdutos();
+        this.atualizarProdutosFiltrados();
         this.cdr.detectChanges();
       },
       error: (err) => console.error(err)
     });
   }
 
-  filtrarPessoas(): void {
-    const busca = this.pessoaBusca.toLowerCase();
-    if (!busca) {
+  atualizarPessoasFiltradas(): void {
+    const texto = this.pessoaBuscaTexto.toLowerCase();
+    if (!texto) {
       this.pessoasFiltradas = this.pessoas;
     } else {
       this.pessoasFiltradas = this.pessoas.filter(p => 
-        p.nome.toLowerCase().includes(busca)
+        p.nome.toLowerCase().includes(texto)
       );
     }
   }
 
-  filtrarProdutos(): void {
-    const busca = this.produtoBusca.toLowerCase();
-    if (!busca) {
+  atualizarProdutosFiltrados(): void {
+    const texto = this.produtoBuscaTexto.toLowerCase();
+    if (!texto) {
       this.produtosFiltrados = this.produtos;
     } else {
       this.produtosFiltrados = this.produtos.filter(p => 
-        p.nome.toLowerCase().includes(busca)
+        p.nome.toLowerCase().includes(texto)
       );
     }
   }
