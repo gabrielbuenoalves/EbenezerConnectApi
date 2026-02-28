@@ -152,7 +152,7 @@ export class RegisterComponent {
   errorMessage: string = '';
   successMessage: string = '';
   loading: boolean = false;
-
+ 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
