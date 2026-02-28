@@ -17,7 +17,6 @@ export const routes: Routes = [
       },
       {
         path: 'register',
-        canActivate: [authGuard, adminConselheiroGuard],
         loadComponent: () => import('./features/auth/pages/register.component').then(m => m.RegisterComponent)
       }
     ]

@@ -167,5 +167,36 @@ namespace EbenezerConnectApi.Controllers
 
             return Ok($"Email de {email} confirmado com sucesso!");
         }
+
+        // 🔧 Endpoint para criar usuário admin inicial
+        [AllowAnonymous]
+        [HttpPost("dev/create-admin")]
+        public async Task<IActionResult> CreateAdminUser()
+        {
+            var adminExistente = await _pessoaRepository.BuscarPorEmail("gabrielbuenoalvesdev@gmail.com");
+            
+            if (adminExistente != null)
+                return BadRequest("Usuário admin já existe.");
+
+            var adminInicial = new Pessoa
+            {
+                Nome = "Gabriel Bueno Alves",
+                Email = "gabrielbuenoalvesdev@gmail.com",
+                Cpf = "00000000000",
+                Funcao = "admin",
+                SenhaHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                EmailConfirmado = true,
+                Saldo = 0
+            };
+
+            await _pessoaRepository.AdicionarPessoa(adminInicial);
+
+            return Ok(new
+            {
+                mensagem = "✅ Usuário admin criado com sucesso!",
+                email = "gabrielbuenoalvesdev@gmail.com",
+                senha = "admin123"
+            });
+        }
     }
 }

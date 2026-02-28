@@ -119,6 +119,35 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// 🌱 Seed: Cria usuário admin inicial se não existir
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var pessoaRepo = scope.ServiceProvider.GetRequiredService<IPessoaRepository>();
+    
+    // Verifica se já existe algum admin
+    var adminExistente = pessoaRepo.BuscarPorEmail("gabrielbuenoalvesdev@gmail.com").Result;
+    
+    if (adminExistente == null)
+    {
+        var adminInicial = new Pessoa
+        {
+            Nome = "Gabriel Bueno Alves",
+            Email = "gabrielbuenoalvesdev@gmail.com",
+            Cpf = "00000000000",
+            Funcao = "admin",
+            SenhaHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+            EmailConfirmado = true,
+            Saldo = 0
+        };
+        
+        pessoaRepo.AdicionarPessoa(adminInicial).Wait();
+        Console.WriteLine("✅ Usuário admin inicial criado com sucesso!");
+        Console.WriteLine($"   Email: {adminInicial.Email}");
+        Console.WriteLine($"   Senha: admin123");
+    }
+}
+
 // Middleware global para capturar erros não tratados
 app.Use(async (context, next) =>
 {
