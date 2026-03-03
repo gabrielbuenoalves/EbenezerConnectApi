@@ -5,16 +5,17 @@ import { forkJoin } from 'rxjs';
 import { PessoaService } from '../../../core/services/pessoa.service';
 import { ProdutoService } from '../../../core/services/produto.service';
 import { FinanceiroService } from '../../../core/services/financeiro.service';
+import { PageHeaderComponent } from '../../../shared/components/page-header.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, PageHeaderComponent],
   template: `
-    <div class="page-header">
-      <h1>Dashboard</h1>
-      <p>Bem-vindo ao sistema Ebenezer Connect</p>
-    </div>
+    <app-page-header
+      title="Dashboard"
+      subtitle="Bem-vindo ao sistema Ebenezer Connect"
+    />
 
     <!-- Seção de Pessoas -->
     <div class="section">

@@ -3,17 +3,18 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanceiroService } from '../../../core/services/financeiro.service';
 import { FinanceiroHistorico } from '../../../core/models';
+import { PageHeaderComponent } from '../../../shared/components/page-header.component';
 import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-controle-financeiro',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PageHeaderComponent],
   template: `
-    <div class="page-header">
-      <h1>Controle Financeiro</h1>
-      <p>Historico de transacoes da cantina e adicoes de saldo</p>
-    </div>
+    <app-page-header
+      title="Controle Financeiro"
+      subtitle="Historico de transacoes da cantina e adicoes de saldo"
+    />
 
     <div class="filters">
       <input

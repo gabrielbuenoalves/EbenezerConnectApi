@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { PessoaService } from '../../../core/services/pessoa.service';
 import { Pessoa } from '../../../core/models';
+import { PageHeaderComponent } from '../../../shared/components/page-header.component';
 
 interface ResumoAdicaoSaldo {
   pessoaNome: string;
@@ -15,11 +16,12 @@ interface ResumoAdicaoSaldo {
 @Component({
   selector: 'app-adicionar-saldo',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, PageHeaderComponent],
   template: `
-    <div class="page-header">
-      <h1>Adicionar Saldo</h1>
-    </div>
+    <app-page-header
+      title="Adicionar Saldo"
+      subtitle="Recarregue o saldo das pessoas cadastradas no sistema"
+    />
 
     <div class="adicionar-saldo-container">
       <div class="card">

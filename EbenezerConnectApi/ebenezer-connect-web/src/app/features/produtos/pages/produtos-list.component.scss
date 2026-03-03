@@ -1,13 +1,5 @@
 @use '../../../shared/styles/shared';
 
-.page-header {
-  @apply flex justify-between items-center mb-8;
-
-  h1 {
-    @apply m-0 text-gray-800;
-  }
-}
-
 .btn-primary {
   background-color: #667eea;
   color: white;

@@ -1,21 +1,7 @@
 @use '../../../shared/styles/shared';
 
-.page-header {
-  @apply flex justify-between items-center mb-8;
-
-  h1 {
-    @apply m-0 text-gray-800;
-  }
-}
-
 .header-actions {
   @apply flex gap-3;
-  
-  .btn-primary {
-    @apply px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium;
-    @apply hover:bg-indigo-700 transition;
-    @apply flex items-center gap-2;
-  }
 }
 
 .filters {

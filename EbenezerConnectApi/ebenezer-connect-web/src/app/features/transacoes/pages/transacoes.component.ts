@@ -7,6 +7,7 @@ import { TransacaoService } from '../../../core/services/transacao.service';
 import { PessoaService } from '../../../core/services/pessoa.service';
 import { ProdutoService } from '../../../core/services/produto.service';
 import { Pessoa, Produto, ItemTransacaoDto } from '../../../core/models';
+import { PageHeaderComponent } from '../../../shared/components/page-header.component';
 
 @Directive({
   selector: '[clickOutside]',
@@ -42,11 +43,12 @@ interface ResumoCompra {
 @Component({
   selector: 'app-transacoes',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ClickOutsideDirective],
+  imports: [CommonModule, FormsModule, RouterModule, ClickOutsideDirective, PageHeaderComponent],
   template: `
-    <div class="page-header">
-      <h1>Cantina</h1>
-    </div>
+    <app-page-header
+      title="Cantina"
+      subtitle="Realize compras e consulte o histórico de transações da cantina"
+    />
 
     <div *ngIf="mensagemSucesso" class="success-message">
       {{ mensagemSucesso }}

@@ -5,29 +5,32 @@ import { FormsModule } from '@angular/forms';
 import { PessoaService } from '../../../core/services/pessoa.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Pessoa } from '../../../core/models';
+import { PageHeaderComponent } from '../../../shared/components/page-header.component';
 
 @Component({
   selector: 'app-pessoas-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, PageHeaderComponent],
   template: `
-    <div class="page-header">
-      <h1>Gerenciar Pessoas</h1>
-      <div class="header-actions">
+    <app-page-header
+      title="Gerenciar Pessoas"
+      subtitle="Visualize, edite e gerencie informações de todas as pessoas cadastradas no sistema"
+    >
+      <div header-actions class="header-actions">
         <button 
           *ngIf="isAdminOrConselheiro" 
           routerLink="/pessoas/importar" 
-          class="btn-primary">
+          class="btn-primary header-btn">
           📥 Importar via Excel
         </button>
         <button 
           *ngIf="isAdminOrConselheiro" 
           (click)="abrirModalCadastro()" 
-          class="btn-primary">
+          class="btn-primary header-btn">
           ➕ Cadastrar Pessoa
         </button>
       </div>
-    </div>
+    </app-page-header>
     
     <div class="filters">
       <select [(ngModel)]="filtroFuncao" (change)="filtrar()" class="form-control">

@@ -4,16 +4,21 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { RouterModule } from '@angular/router';
 import { ProdutoService } from '../../../core/services/produto.service';
 import { Produto, CriarProdutoDto } from '../../../core/models';
+import { PageHeaderComponent } from '../../../shared/components/page-header.component';
 
 @Component({
   selector: 'app-produtos-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, PageHeaderComponent],
   template: `
-    <div class="page-header">
-      <h1>Gerenciar Produtos</h1>
-      <button (click)="openModal()" class="btn-primary">+ Novo Produto</button>
-    </div>
+    <app-page-header
+      title="Gerenciar Produtos"
+      subtitle="Controle de estoque, preços e informações dos produtos da cantina"
+    >
+      <div header-actions>
+        <button (click)="openModal()" class="btn-primary header-btn">+ Novo Produto</button>
+      </div>
+    </app-page-header>
 
     <div class="table-container">
       <table class="data-table">
