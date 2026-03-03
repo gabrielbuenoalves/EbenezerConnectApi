@@ -43,7 +43,7 @@ namespace EbenezerConnectApi.Controllers
             _env = env;
         }
         
-        [Authorize(Roles = "admin,conselheiro")]
+        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto dto)
         {
@@ -63,9 +63,25 @@ namespace EbenezerConnectApi.Controllers
             }
             catch (Exception ex)
             {
-                // Loga o erro para aparecer no log streaming da Azure
-                Console.WriteLine($"Erro ao registrar usuário: {ex.Message}\n{ex.StackTrace}");
-                return StatusCode(500, "Erro interno ao tentar registrar o usuário.");
+                // Loga o erro para aparecer no log streaming
+                _logger.LogError(ex, "Erro ao registrar usuário: {Message}", ex.Message);
+                Console.WriteLine($"❌ Erro ao registrar usuário: {ex.Message}");
+                Console.WriteLine($"Stack: {ex.StackTrace}");
+                
+                // Retorna erro detalhado em desenvolvimento
+                if (_env.IsDevelopment())
+                {
+                    return StatusCode(500, new { 
+                        sucesso = false,
+                        erro = ex.Message,
+                        detalhes = ex.StackTrace
+                    });
+                }
+                
+                return StatusCode(500, new { 
+                    sucesso = false,
+                    erro = "Erro interno ao tentar registrar o usuário."
+                });
             }
         }
 
@@ -197,6 +213,44 @@ namespace EbenezerConnectApi.Controllers
                 email = "gabrielbuenoalvesdev@gmail.com",
                 senha = "admin123"
             });
+        }
+
+        // 🔧 Endpoint de teste para verificar envio de email
+        [AllowAnonymous]
+        [HttpPost("dev/test-email")]
+        public async Task<IActionResult> TestEmail([FromQuery] string email)
+        {
+            try
+            {
+                _logger.LogInformation("🧪 Iniciando teste de envio de email...");
+                
+                var pessoa = new Pessoa
+                {
+                    Nome = "Teste",
+                    Email = email
+                };
+
+                var token = Guid.NewGuid().ToString();
+                await _emailService.EnviarEmailConfirmacao(pessoa, token);
+
+                return Ok(new
+                {
+                    sucesso = true,
+                    mensagem = $"✅ Email de teste enviado para {email}",
+                    token = token
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Erro ao enviar email de teste");
+                return StatusCode(500, new
+                {
+                    sucesso = false,
+                    erro = ex.Message,
+                    detalhes = ex.InnerException?.Message,
+                    stackTrace = ex.StackTrace
+                });
+            }
         }
     }
 }
