@@ -1,5 +1,6 @@
 using EbenezerConnectApi.Models.Dtos;
 using EbenezerConnectApi.Repository;
+using EbenezerConnectApi.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -118,7 +119,7 @@ namespace EbenezerConnectApi.Controllers
                     }
 
                     transacao.Revertida = true;
-                    transacao.DataReversao = DateTime.UtcNow;
+                    transacao.DataReversao = DateTimeHelper.NowBrasilia();
                     _context.TransacaoCantina.Update(transacao);
 
                     await _context.SaveChangesAsync();
@@ -143,7 +144,7 @@ namespace EbenezerConnectApi.Controllers
                     _context.Pessoa.Update(credito.Pessoa);
 
                     credito.Revertida = true;
-                    credito.DataReversao = DateTime.UtcNow;
+                    credito.DataReversao = DateTimeHelper.NowBrasilia();
                     _context.AdicaoSaldo.Update(credito);
 
                     await _context.SaveChangesAsync();

@@ -3,6 +3,7 @@ using EbenezerConnectApi.Models.Entities;
 using EbenezerConnectApi.Repository;
 using EbenezerConnectApi.Repository.Interfaces;
 using EbenezerConnectApi.Services.Interfaces;
+using EbenezerConnectApi.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace EbenezerConnectApi.Services
@@ -42,7 +43,7 @@ namespace EbenezerConnectApi.Services
                     ProdutoId = produto.Id,
                     PrecoCompra = produto.PrecoCompraAtual,
                     PrecoVenda = produto.PrecoVendaAtual,
-                    DataInicio = DateTime.UtcNow
+                    DataInicio = DateTimeHelper.NowBrasilia()
                 };
 
                 await _context.PrecoHistoricoProduto.AddAsync(historico);
@@ -79,7 +80,7 @@ namespace EbenezerConnectApi.Services
                     ProdutoId = produtoExistente.Id,
                     PrecoCompra = dto.PrecoCompra,
                     PrecoVenda = dto.PrecoVenda,
-                    DataInicio = DateTime.UtcNow
+                    DataInicio = DateTimeHelper.NowBrasilia()
                 };
 
                 await _context.PrecoHistoricoProduto.AddAsync(historico);
@@ -113,7 +114,7 @@ namespace EbenezerConnectApi.Services
                 ProdutoId = produtoId,
                 PrecoCompra = novoPrecoCompra,
                 PrecoVenda = novoPrecoVenda,
-                DataInicio = DateTime.UtcNow
+                DataInicio = DateTimeHelper.NowBrasilia()
             };
 
             await _context.PrecoHistoricoProduto.AddAsync(historico);

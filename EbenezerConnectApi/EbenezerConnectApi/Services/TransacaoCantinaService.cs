@@ -4,6 +4,7 @@ using EbenezerConnectApi.Models.Entities;
 using EbenezerConnectApi.Repository;
 using EbenezerConnectApi.Repository.Interfaces;
 using EbenezerConnectApi.Services.Interfaces;
+using EbenezerConnectApi.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace EbenezerConnectApi.Services
@@ -74,7 +75,7 @@ namespace EbenezerConnectApi.Services
             var transacao = new TransacaoCantina
             {
                 PessoaId = dto.PessoaId,
-                DataTransacao = DateTime.UtcNow,
+                DataTransacao = DateTimeHelper.NowBrasilia(),
                 Valor = total,
                 Tipo = dto.TipoPagamento,
                 Itens = itensTransacao

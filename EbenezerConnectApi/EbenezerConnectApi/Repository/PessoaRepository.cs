@@ -1,5 +1,6 @@
 ﻿using EbenezerConnectApi.Models.Entities;
 using EbenezerConnectApi.Repository.Interfaces;
+using EbenezerConnectApi.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace EbenezerConnectApi.Repository
@@ -88,7 +89,7 @@ namespace EbenezerConnectApi.Repository
                 {
                     PessoaId = pessoa.Id,
                     Valor = valor,
-                    DataAdicao = DateTime.UtcNow,
+                    DataAdicao = DateTimeHelper.NowBrasilia(),
                     Revertida = false
                 });
                 await _context.SaveChangesAsync();

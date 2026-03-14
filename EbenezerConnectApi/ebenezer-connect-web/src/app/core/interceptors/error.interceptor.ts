@@ -7,10 +7,11 @@ import { AuthService } from '../services/auth.service';
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const authService = inject(AuthService);
+  const isAuthRequest = /\/auth\/(login|register|confirmar-email|redefinir-senha)/i.test(req.url);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401) {
+      if (error.status === 401 && !isAuthRequest && !!authService.getToken()) {
         authService.logout();
       }
 
