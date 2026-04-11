@@ -6,6 +6,7 @@ using EbenezerConnectApi.Repository.Interfaces;
 using EbenezerConnectApi.Services.Interfaces;
 using EbenezerConnectApi.Helpers;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 using System.Data;
 
 namespace EbenezerConnectApi.Services
@@ -21,21 +22,17 @@ namespace EbenezerConnectApi.Services
 
         public async Task<(bool sucesso, string mensagem)> EfetuarTransacaoAsync(RegistrarTransacaoDto dto)
         {
-            // Validações iniciais básicas (fora da transação para falhar rápido)
-            var pessoa = await _context.Pessoa.FindAsync(dto.PessoaId);
-            if (pessoa == null)
-                return (false, "Pessoa não encontrada.");
-            
             if (dto.Itens == null || !dto.Itens.Any())
                 return (false, "Nenhum item foi adicionado à transação.");
 
-            // Inicia transação SERIALIZABLE para evitar race conditions
-            // Isolamento Serializable evita dirty reads, non-repeatable reads e phantoms
             using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
             
             try
             {
-                // DENTRO DA TRANSAÇÃO: Re-lê produtos com lock garantido
+                var pessoa = await _context.Pessoa.FindAsync(dto.PessoaId);
+                if (pessoa == null)
+                    return (false, "Pessoa não encontrada.");
+
                 var produtosIds = dto.Itens.Select(i => i.ProdutoId).ToList();
                 var produtos = await _context.Produto
                     .Where(p => produtosIds.Contains(p.Id))
@@ -44,18 +41,35 @@ namespace EbenezerConnectApi.Services
                 var itensTransacao = new List<ItemTransacaoCantina>();
                 double total = 0;
 
-                // Valida estoque dentro da transação (não pode mudar de fora)
+                var quantidadesPorProduto = dto.Itens
+                    .GroupBy(i => i.ProdutoId)
+                    .Select(g => new { ProdutoId = g.Key, Quantidade = g.Sum(x => x.Quantidade) })
+                    .ToList();
+
+                // Reserva de estoque atômica por produto: evita lost update em concorrência.
+                foreach (var grupo in quantidadesPorProduto)
+                {
+                    if (!produtos.TryGetValue(grupo.ProdutoId, out var produto))
+                        return (false, $"Produto com ID {grupo.ProdutoId} não encontrado.");
+
+                    var linhasAfetadas = await _context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE Produto SET QuantidadeEmEstoque = QuantidadeEmEstoque - {grupo.Quantidade} WHERE Id = {grupo.ProdutoId} AND QuantidadeEmEstoque >= {grupo.Quantidade}");
+
+                    if (linhasAfetadas == 0)
+                    {
+                        var estoqueAtual = await _context.Produto
+                            .Where(p => p.Id == grupo.ProdutoId)
+                            .Select(p => p.QuantidadeEmEstoque)
+                            .FirstOrDefaultAsync();
+
+                        return (false, $"Estoque insuficiente para {produto.Nome}. Disponível: {estoqueAtual}");
+                    }
+                }
+
                 foreach (var itemDto in dto.Itens)
                 {
                     if (!produtos.TryGetValue(itemDto.ProdutoId, out var produto))
                         return (false, $"Produto com ID {itemDto.ProdutoId} não encontrado.");
-                    
-                    if (produto.QuantidadeEmEstoque < itemDto.Quantidade)
-                        return (false, $"Estoque insuficiente para {produto.Nome}. Disponível: {produto.QuantidadeEmEstoque}");
-
-                    // Atualiza estoque dentro da transação
-                    produto.QuantidadeEmEstoque -= itemDto.Quantidade;
-                    _context.Produto.Update(produto);
 
                     var precoVenda = (double)produto.PrecoVendaAtual;
                     var precoCompra = (double)produto.PrecoCompraAtual;
@@ -75,8 +89,11 @@ namespace EbenezerConnectApi.Services
                 switch (dto.TipoPagamento.ToLower())
                 {
                     case "saldo":
-                        pessoa.Saldo -= total;
-                        _context.Pessoa.Update(pessoa);
+                        var saldoAtualizado = await _context.Database.ExecuteSqlInterpolatedAsync(
+                            $"UPDATE Pessoa SET Saldo = Saldo - {total} WHERE Id = {dto.PessoaId} AND Saldo >= {total}");
+
+                        if (saldoAtualizado == 0)
+                            return (false, "Saldo insuficiente para concluir a compra.");
                         break;
                     case "avista":
                         // saldo não é alterado
@@ -105,6 +122,11 @@ namespace EbenezerConnectApi.Services
             {
                 await transaction.RollbackAsync();
                 return (false, $"Erro ao atualizar produtos: {ex.InnerException?.Message}");
+            }
+            catch (MySqlException ex) when (ex.Number == 1213 || ex.Number == 1205)
+            {
+                await transaction.RollbackAsync();
+                return (false, "Conflito de concorrência detectado. Tente novamente.");
             }
             catch (Exception ex)
             {
