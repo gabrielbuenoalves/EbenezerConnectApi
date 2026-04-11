@@ -1,10 +1,12 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ProdutoService } from '../../../core/services/produto.service';
 import { Produto, CriarProdutoDto } from '../../../core/models';
 import { PageHeaderComponent } from '../../../shared/components/page-header.component';
+import { interval, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-produtos-list',
@@ -85,12 +87,14 @@ import { PageHeaderComponent } from '../../../shared/components/page-header.comp
   `,
   styleUrls: ['./produtos-list.component.scss']
 })
-export class ProdutosListComponent implements OnInit {
+export class ProdutosListComponent implements OnInit, OnDestroy {
   produtos: Produto[] = [];
   showModal: boolean = false;
   isEditing: boolean = false;
   produtoEditId?: number;
   produtoForm: FormGroup;
+  private destroy$ = new Subject<void>();
+  private autoRefreshInterval = 5000; // 5 segundos
 
   constructor(
     private produtoService: ProdutoService,
@@ -106,7 +110,19 @@ export class ProdutosListComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Carrega produtos imediatamente
     this.loadProdutos();
+
+    // Auto-refresh a cada 5 segundos (enquanto componente está visível)
+    interval(this.autoRefreshInterval)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.loadProdutos());
+  }
+
+  ngOnDestroy(): void {
+    // Limpa subscriptions ao destruir componente
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadProdutos(): void {
@@ -115,7 +131,7 @@ export class ProdutosListComponent implements OnInit {
         this.produtos = data;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error(err)
+      error: (err) => console.error('Erro ao atualizar produtos:', err)
     });
   }
 
