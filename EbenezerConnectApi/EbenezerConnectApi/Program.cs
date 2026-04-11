@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using BCrypt.Net;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -31,12 +32,13 @@ builder.Configuration
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables();
 
-// CORS
+// CORS: Restringido por domínio em produção
+var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"]?.Split(";") ?? new[] { "http://localhost:4200", "http://localhost:3000" };
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("RestrictedCors", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -118,33 +120,41 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+var enableHttpsRedirection = builder.Configuration.GetValue<bool>("AppSettings:EnableHttpsRedirection", !app.Environment.IsProduction());
 
-// 🌱 Seed: Cria usuário admin inicial se não existir
-using (var scope = app.Services.CreateScope())
+// 🌱 Seed: Cria usuário admin inicial se não existir (controlado por variável de ambiente)
+var seedAdminEnabled = builder.Configuration.GetValue<bool>("SeedAdmin:Enabled", false);
+if (seedAdminEnabled)
 {
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var pessoaRepo = scope.ServiceProvider.GetRequiredService<IPessoaRepository>();
-    
-    // Verifica se já existe algum admin
-    var adminExistente = pessoaRepo.BuscarPorEmail("gabrielbuenoalvesdev@gmail.com").Result;
-    
-    if (adminExistente == null)
+    using (var scope = app.Services.CreateScope())
     {
-        var adminInicial = new Pessoa
-        {
-            Nome = "Gabriel Bueno Alves",
-            Email = "gabrielbuenoalvesdev@gmail.com",
-            Cpf = "00000000000",
-            Funcao = "admin",
-            SenhaHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
-            EmailConfirmado = true,
-            Saldo = 0
-        };
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var pessoaRepo = scope.ServiceProvider.GetRequiredService<IPessoaRepository>();
         
-        pessoaRepo.AdicionarPessoa(adminInicial).Wait();
-        Console.WriteLine("✅ Usuário admin inicial criado com sucesso!");
-        Console.WriteLine($"   Email: {adminInicial.Email}");
-        Console.WriteLine($"   Senha: admin123");
+        var seedEmail = builder.Configuration["SeedAdmin:Email"] ?? "admin@example.com";
+        var seedAdminExistente = pessoaRepo.BuscarPorEmail(seedEmail).Result;
+        
+        if (seedAdminExistente == null)
+        {
+            var adminInicial = new Pessoa
+            {
+                Nome = builder.Configuration["SeedAdmin:Name"] ?? "Admin",
+                Email = seedEmail,
+                Cpf = builder.Configuration["SeedAdmin:Cpf"] ?? "00000000000",
+                Funcao = "admin",
+                SenhaHash = BCrypt.Net.BCrypt.HashPassword(builder.Configuration["SeedAdmin:Password"] ?? "admin123"),
+                EmailConfirmado = true,
+                Saldo = 0
+            };
+            
+            pessoaRepo.AdicionarPessoa(adminInicial).Wait();
+            Console.WriteLine("✅ Usuário admin inicial criado com sucesso!");
+            Console.WriteLine($"   Email: {adminInicial.Email}");
+        }
+        else
+        {
+            Console.WriteLine($"ℹ️  Admin já existente: {seedEmail}");
+        }
     }
 }
 
@@ -166,15 +176,23 @@ app.Use(async (context, next) =>
     }
 });
 
-// Swagger em ambientes DEV ou PROD
-if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
+// Swagger apenas em Development (desabilitar em Prod por segurança)
+if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");
-app.UseHttpsRedirection();
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
+app.UseCors("RestrictedCors");
+if (enableHttpsRedirection)
+{
+    app.UseHttpsRedirection();
+}
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

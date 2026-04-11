@@ -1,0 +1,15 @@
+# Root secrets
+.env
+.env.*
+!.env.example
+
+# OS/editor noise
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Docker override files
+docker-compose.override.yml
