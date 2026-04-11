@@ -54,6 +54,10 @@ interface ResumoCompra {
       {{ mensagemSucesso }}
     </div>
 
+    <div *ngIf="mensagemErro" class="error-message">
+      {{ mensagemErro }}
+    </div>
+
     <div class="transacao-container">
         <div class="left-panel">
           <div class="card">
@@ -235,7 +239,9 @@ export class TransacoesComponent implements OnInit {
   resumoCompra: ResumoCompra | null = null;
   processandoTransacao: boolean = false;
   mensagemSucesso: string = '';
+  mensagemErro: string = '';
   private sucessoTimeoutId: number | null = null;
+  private erroTimeoutId: number | null = null;
 
   constructor(
     private transacaoService: TransacaoService,
@@ -451,16 +457,32 @@ export class TransacoesComponent implements OnInit {
       },
       error: (err) => {
         this.processandoTransacao = false;
-        let mensagemErro = 'Erro ao realizar transação';
+        let mensagemErro = 'Erro ao realizar transação.';
+        let deveAtualizarEstoque = false;
+
         if (err?.name === 'TimeoutError') {
           mensagemErro = 'Tempo limite excedido. Tente novamente.';
         }
+
         if (err.error && err.error.erro) {
           mensagemErro = err.error.erro;
         } else if (err.message) {
           mensagemErro = err.message;
         }
-        alert(mensagemErro);
+
+        const mensagemLower = (mensagemErro || '').toLowerCase();
+        if (mensagemLower.includes('conflito de concorrência') || mensagemLower.includes('estoque insuficiente')) {
+          mensagemErro = 'Esse produto acabou de ser atualizado por outra venda. O estoque foi recarregado, confira os itens e tente novamente.';
+          deveAtualizarEstoque = true;
+        }
+
+        this.exibirMensagemErro(mensagemErro);
+
+        if (deveAtualizarEstoque) {
+          this.recarregarEstoqueEAjustarCarrinho();
+          this.modalAberta = false;
+        }
+
         console.error('Erro na transação:', err);
       }
     });
@@ -476,6 +498,50 @@ export class TransacoesComponent implements OnInit {
       this.mensagemSucesso = '';
       this.sucessoTimeoutId = null;
     }, 3000);
+  }
+
+  private exibirMensagemErro(mensagem: string): void {
+    this.mensagemErro = mensagem;
+    this.cdr.detectChanges();
+
+    if (this.erroTimeoutId) {
+      window.clearTimeout(this.erroTimeoutId);
+    }
+
+    this.erroTimeoutId = window.setTimeout(() => {
+      this.mensagemErro = '';
+      this.erroTimeoutId = null;
+    }, 5000);
+  }
+
+  private recarregarEstoqueEAjustarCarrinho(): void {
+    this.produtoService.getAll().subscribe({
+      next: (data) => {
+        this.produtos = data.filter(p => p.quantidadeEmEstoque > 0);
+        this.produtosFiltrados = this.produtos;
+        this.ajustarCarrinhoAoEstoqueAtual();
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Erro ao recarregar estoque após conflito:', err)
+    });
+  }
+
+  private ajustarCarrinhoAoEstoqueAtual(): void {
+    const estoquePorProduto = new Map(this.produtos.map((p) => [p.id, p.quantidadeEmEstoque]));
+
+    this.carrinho = this.carrinho
+      .map((item) => {
+        const estoqueAtual = estoquePorProduto.get(item.produtoId) ?? 0;
+        if (estoqueAtual <= 0) {
+          return null;
+        }
+
+        return {
+          ...item,
+          quantidade: Math.min(item.quantidade, estoqueAtual)
+        };
+      })
+      .filter((item): item is ItemCarrinho => item !== null && item.quantidade > 0);
   }
 
   formatarTipoPagamento(tipo: string): string {

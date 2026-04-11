@@ -20,6 +20,13 @@
   @apply fixed right-6 top-20 z-50 shadow-lg;
 }
 
+.error-message {
+  @apply px-4 py-3 rounded-md text-sm font-medium;
+  @apply bg-red-50 text-red-700 border border-red-200;
+  @apply fixed right-6 top-36 z-50 shadow-lg;
+  max-width: 420px;
+}
+
 .form-control-sm {
   @apply w-20 px-2 py-2 border border-gray-300 rounded-md;
 }
