@@ -10,14 +10,20 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:5000
-      ConnectionStrings__DefaultConnection: ${DB_CONNECTION_STRING}
-      Jwt__Key: ${JWT_KEY}
-      Jwt__Issuer: ${JWT_ISSUER}
-      Jwt__Audience: ${JWT_AUDIENCE}
-      EmailSettings__From: ${EMAIL_FROM}
-      EmailSettings__Password: ${EMAIL_PASSWORD}
-      AppSettings__BaseUrl: ${APP_BASE_URL}
-      Cors__AllowedOrigins: ${Cors__AllowedOrigins}
+      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection}
+      Jwt__Key: ${Jwt__Key}
+      Jwt__Issuer: ${Jwt__Issuer}
+      Jwt__Audience: ${Jwt__Audience}
+      EmailSettings__From: ${EmailSettings__From}
+      EmailSettings__Password: ${EmailSettings__Password}
+      AppSettings__BaseUrl: ${AppSettings__BaseUrl}
+      Cors__AllowedOrigins: ${Cors__AllowedOrigins:-}
+      Cors__AllowedOrigins__0: ${Cors__AllowedOrigins__0:-}
+      SeedAdmin__Enabled: ${SeedAdmin__Enabled:-false}
+      SeedAdmin__Name: ${SeedAdmin__Name:-Admin}
+      SeedAdmin__Email: ${SeedAdmin__Email:-admin@example.com}
+      SeedAdmin__Password: ${SeedAdmin__Password:-CHANGE_ME_STRONG_PASSWORD}
+      SeedAdmin__Cpf: ${SeedAdmin__Cpf:-00000000000}
     expose:
       - "5000"
 

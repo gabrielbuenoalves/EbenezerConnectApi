@@ -32,8 +32,27 @@ builder.Configuration
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables();
 
-// CORS: Restringido por domínio em produção
-var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"]?.Split(";") ?? new[] { "http://localhost:4200", "http://localhost:3000" };
+// CORS: aceita formato string (a;b;c) e array (Cors__AllowedOrigins__0, __1...)
+var allowedOriginsFromString = builder.Configuration["Cors:AllowedOrigins"];
+var allowedOriginsFromArray = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>();
+
+var allowedOrigins = (allowedOriginsFromArray ?? Array.Empty<string>())
+    .Where(origin => !string.IsNullOrWhiteSpace(origin))
+    .Select(origin => origin.Trim())
+    .ToArray();
+
+if (allowedOrigins.Length == 0 && !string.IsNullOrWhiteSpace(allowedOriginsFromString))
+{
+    allowedOrigins = allowedOriginsFromString
+        .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+}
+
+if (allowedOrigins.Length == 0)
+{
+    allowedOrigins = new[] { "http://localhost:4200", "http://localhost:3000" };
+}
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("RestrictedCors", policy =>
