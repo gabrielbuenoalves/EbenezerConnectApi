@@ -90,10 +90,10 @@ namespace EbenezerConnectApi.Services
                 {
                     case "saldo":
                         var saldoAtualizado = await _context.Database.ExecuteSqlInterpolatedAsync(
-                            $"UPDATE Pessoa SET Saldo = Saldo - {total} WHERE Id = {dto.PessoaId} AND Saldo >= {total}");
+                            $"UPDATE Pessoa SET Saldo = Saldo - {total} WHERE Id = {dto.PessoaId}");
 
                         if (saldoAtualizado == 0)
-                            return (false, "Saldo insuficiente para concluir a compra.");
+                            return (false, "Pessoa não encontrada.");
                         break;
                     case "avista":
                         // saldo não é alterado
