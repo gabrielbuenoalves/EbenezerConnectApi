@@ -52,29 +52,7 @@ cd EbenezerConnectApi
 Copie e cole exatamente este bloco na EC2:
 
 ```bash
-cat > .env << 'EOF'
-ConnectionStrings__DefaultConnection=server=187.35.145.6;port=3306;database=db_batista;uid=root;pwd=cprg49bn
 
-Jwt__Key=a3F1zM9@p*BvL7$dQs#XzNw!eR4CtU6H
-Jwt__Issuer=EbenezerConnectApi
-Jwt__Audience=EbenezerConnectApp
-
-EmailSettings__From=acampamentobatistaebenezer@gmail.com
-EmailSettings__Password=lgrgcjlooaaesxac
-
-AppSettings__BaseUrl=http://18.229.137.241
-
-Cors__AllowedOrigins__0=http://18.229.137.241
-# Se tiver dominio final, adicione mais origens:
-# Cors__AllowedOrigins__1=https://seudominio.com
-# Cors__AllowedOrigins__2=https://www.seudominio.com
-
-SeedAdmin__Enabled=false
-SeedAdmin__Name=Admin
-SeedAdmin__Email=admin@example.com
-SeedAdmin__Password=troque-esta-senha
-SeedAdmin__Cpf=00000000000
-EOF
 ```
 
 Importante:
