@@ -14,8 +14,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev && npm install -g serve
 COPY --from=build /app/dist ./dist
 
 EXPOSE 4000
-CMD ["node", "dist/ebenezer-connect-web/server/server.mjs"]
+CMD ["serve", "-s", "dist/ebenezer-connect-web/browser", "-l", "4000"]
