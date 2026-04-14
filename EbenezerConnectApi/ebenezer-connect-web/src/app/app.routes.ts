@@ -56,6 +56,10 @@ export const routes: Routes = [
       {
         path: 'controle-financeiro',
         loadComponent: () => import('./features/financeiro/pages/controle-financeiro.component').then(m => m.ControleFinanceiroComponent)
+      },
+      {
+        path: 'saida-produtos',
+        loadComponent: () => import('./features/saida-produtos/pages/saida-produtos.component').then(m => m.SaidaProdutosComponent)
       }
     ]
   },

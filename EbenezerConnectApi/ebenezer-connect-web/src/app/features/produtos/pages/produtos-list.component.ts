@@ -30,7 +30,6 @@ import { takeUntil } from 'rxjs/operators';
             <th>Estoque</th>
             <th>Preço Compra</th>
             <th>Preço Venda</th>
-            <th>Margem</th>
             <th>Ações</th>
           </tr>
         </thead>
@@ -44,7 +43,6 @@ import { takeUntil } from 'rxjs/operators';
             </td>
             <td>R$ {{ produto.precoCompraAtual.toFixed(2) }}</td>
             <td>R$ {{ produto.precoVendaAtual.toFixed(2) }}</td>
-            <td>{{ calcularMargem(produto) }}%</td>
             <td>
               <button (click)="editProduto(produto)" class="btn-sm btn-primary">Editar</button>
               <button (click)="deleteProduto(produto.id)" class="btn-sm btn-danger">Remover</button>
@@ -189,11 +187,6 @@ export class ProdutosListComponent implements OnInit, OnDestroy {
         error: (err) => alert('Erro ao remover produto')
       });
     }
-  }
-
-  calcularMargem(produto: Produto): string {
-    const margem = ((produto.precoVendaAtual - produto.precoCompraAtual) / produto.precoCompraAtual) * 100;
-    return margem.toFixed(1);
   }
 
   trackByProdutoId(index: number, produto: Produto): number {

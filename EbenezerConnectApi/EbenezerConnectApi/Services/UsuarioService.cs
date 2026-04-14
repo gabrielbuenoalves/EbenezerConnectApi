@@ -4,6 +4,7 @@ using EbenezerConnectApi.Services.Interfaces;
 using BCrypt.Net;
 using AutoMapper;
 using EbenezerConnectApi.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace EbenezerConnectApi.Services
 {
@@ -12,15 +13,18 @@ namespace EbenezerConnectApi.Services
         private readonly IPessoaRepository _pessoaRepository;
         private readonly IEmailConfirmacaoRepository _emailConfirmacaoRepo;
         private readonly EmailService _emailService;
+        private readonly ILogger<UsuarioService> _logger;
 
         public UsuarioService(
             IPessoaRepository pessoaRepository,
             IEmailConfirmacaoRepository emailConfirmacaoRepo,
-            EmailService emailService)
+            EmailService emailService,
+            ILogger<UsuarioService> logger)
         {
             _pessoaRepository = pessoaRepository;
             _emailConfirmacaoRepo = emailConfirmacaoRepo;
             _emailService = emailService;
+            _logger = logger;
         }
 
         public async Task Cadastrar(Pessoa pessoa, string senha)
@@ -42,8 +46,15 @@ namespace EbenezerConnectApi.Services
 
             await _emailConfirmacaoRepo.SalvarToken(confirmacao);
 
-            // Enviar e-mail
-            await _emailService.EnviarEmailConfirmacao(pessoa, token);
+            // Enviar e-mail sem falhar o cadastro caso o SMTP esteja indisponível
+            try
+            {
+                await _emailService.EnviarEmailConfirmacao(pessoa, token);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Cadastro realizado, mas o e-mail de confirmação falhou para {Email}", pessoa.Email);
+            }
         }
 
         public async Task<Pessoa?> Autenticar(string email, string senha)

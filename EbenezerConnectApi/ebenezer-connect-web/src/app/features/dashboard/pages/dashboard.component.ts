@@ -88,10 +88,10 @@ import { PageHeaderComponent } from '../../../shared/components/page-header.comp
         </div>
 
         <div class="stat-card">
-          <div class="stat-icon lucro">💰</div>
+          <div class="stat-icon faturamento">💰</div>
           <div class="stat-info">
-            <h3>{{ stats.lucro | currency:'BRL' }}</h3>
-            <p>Lucro</p>
+            <h3>{{ stats.faturamento | currency:'BRL' }}</h3>
+            <p>Faturamento</p>
           </div>
         </div>
 
@@ -159,7 +159,7 @@ export class DashboardComponent implements OnInit {
     produtos: 0,
     produtosBaixoEstoque: 0,
     saldoDevedor: 0,
-    lucro: 0,
+    faturamento: 0,
     quantidadeVendas: 0,
     saldoNaoUtilizado: 0
   };
@@ -205,7 +205,7 @@ export class DashboardComponent implements OnInit {
           .reduce((acc, p) => acc + p.saldo, 0);
 
         // Total de vendas
-        const totalVendas = data.historico
+        const faturamento = data.historico
           .filter(h => h.tipo === 'cantina' && !h.revertida)
           .reduce((acc, h) => acc + h.valor, 0);
 
@@ -214,9 +214,7 @@ export class DashboardComponent implements OnInit {
           .filter(p => p.saldo < 0)
           .reduce((acc, p) => acc + Math.abs(p.saldo), 0);
 
-        // Lucro = Vendas - Saldo Devedor
-        // Quando o saldo devedor é quitado, ele se torna lucro
-        this.stats.lucro = totalVendas - this.stats.saldoDevedor;
+        this.stats.faturamento = faturamento;
 
         this.cdr.detectChanges();
       },
