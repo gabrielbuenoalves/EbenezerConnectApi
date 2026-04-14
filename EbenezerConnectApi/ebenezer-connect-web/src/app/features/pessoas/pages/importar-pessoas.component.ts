@@ -31,12 +31,12 @@ import * as XLSX from 'xlsx';
             <strong>Formato esperado:</strong>
             <ul>
               <li><strong>Coluna A:</strong> Nome completo (obrigatório)</li>
-              <li><strong>Coluna B:</strong> E-mail (obrigatório)</li>
-              <li><strong>Coluna C:</strong> CPF - apenas números (obrigatório)</li>
+              <li><strong>Coluna B:</strong> E-mail (opcional)</li>
+              <li><strong>Coluna C:</strong> CPF - apenas números (opcional)</li>
               <li><strong>Coluna D:</strong> Função (acampante, conselheiro ou admin)</li>
             </ul>
             <p class="note">
-              <strong>Nota importante:</strong> Uma senha temporária será gerada automaticamente com os primeiros 6 dígitos do CPF. Os usuários deverão alterar a senha no primeiro acesso.
+              <strong>Nota importante:</strong> Uma senha temporária será gerada automaticamente (pelos 6 primeiros dígitos do CPF quando informado).
             </p>
           </div>
         </div>
@@ -281,7 +281,7 @@ export class ImportarPessoasComponent {
     const data = [
       ['Nome', 'Email', 'CPF', 'Funcao'],
       ['João Silva', 'joao@email.com', '12345678901', 'acampante'],
-      ['Maria Santos', 'maria@email.com', '98765432109', 'conselheiro']
+      ['Maria Santos', '', '', 'conselheiro']
     ];
     
     const worksheet = XLSX.utils.aoa_to_sheet(data);

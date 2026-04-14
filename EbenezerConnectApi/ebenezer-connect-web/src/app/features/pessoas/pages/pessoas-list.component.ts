@@ -84,7 +84,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header.comp
           <h3>Cadastrar Nova Pessoa</h3>
           
           <div class="info-message">
-            ℹ️ A senha temporária será gerada automaticamente usando os 6 primeiros dígitos do CPF.
+            ℹ️ A senha temporária será gerada automaticamente (pelos 6 primeiros dígitos do CPF quando informado).
           </div>
 
           <div class="form-group">
@@ -98,7 +98,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header.comp
           </div>
 
           <div class="form-group">
-            <label>Email <span class="required">*</span></label>
+            <label>Email</label>
             <input 
               type="email" 
               [(ngModel)]="novaPessoa.email" 
@@ -108,7 +108,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header.comp
           </div>
 
           <div class="form-group">
-            <label>CPF <span class="required">*</span></label>
+            <label>CPF</label>
             <input 
               type="text" 
               [(ngModel)]="novaPessoa.cpf" 
@@ -117,7 +117,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header.comp
               maxlength="11"
               (input)="formatCpf($event)"
             />
-            <small class="help-text">Será usado para gerar a senha temporária</small>
+            <small class="help-text">Se informado, será usado para gerar a senha temporária</small>
           </div>
 
           <div class="form-group">
@@ -427,41 +427,40 @@ export class PessoasListComponent implements OnInit {
     this.cadastroError = '';
     this.cadastroSucesso = '';
 
+    const nome = this.novaPessoa.nome?.trim() || '';
+    const email = this.novaPessoa.email?.trim() || '';
+    const cpf = this.novaPessoa.cpf?.trim() || '';
+    const funcao = this.novaPessoa.funcao;
+
     // Validações
-    if (!this.novaPessoa.nome || this.novaPessoa.nome.trim() === '') {
+    if (!nome) {
       this.cadastroError = 'Nome é obrigatório';
       return;
     }
 
-    if (!this.novaPessoa.email || this.novaPessoa.email.trim() === '') {
-      this.cadastroError = 'Email é obrigatório';
-      return;
-    }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(this.novaPessoa.email)) {
+    if (email && !emailRegex.test(email)) {
       this.cadastroError = 'Email inválido';
       return;
     }
 
-    if (!this.novaPessoa.cpf || this.novaPessoa.cpf.length !== 11) {
+    if (cpf && cpf.length !== 11) {
       this.cadastroError = 'CPF deve conter 11 dígitos';
       return;
     }
 
-    if (!this.novaPessoa.funcao) {
+    if (!funcao) {
       this.cadastroError = 'Função é obrigatória';
       return;
     }
 
-    // Gera senha temporária (primeiros 6 dígitos do CPF)
-    const senhaTemporaria = this.novaPessoa.cpf.substring(0, 6);
+    const senhaTemporaria = cpf ? cpf.substring(0, 6) : this.gerarSenhaTemporaria();
 
     const dadosCadastro = {
-      nome: this.novaPessoa.nome,
-      email: this.novaPessoa.email,
-      cpf: this.novaPessoa.cpf,
-      funcao: this.novaPessoa.funcao,
+      nome,
+      email,
+      cpf,
+      funcao,
       telefone: '',
       senha: senhaTemporaria,
       confirmarSenha: senhaTemporaria
@@ -484,5 +483,9 @@ export class PessoasListComponent implements OnInit {
         console.error('Erro no cadastro:', error);
       }
     });
+  }
+
+  private gerarSenhaTemporaria(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 }

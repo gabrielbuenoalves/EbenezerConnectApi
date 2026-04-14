@@ -60,22 +60,24 @@ namespace EbenezerConnectApi.Services
                             continue;
                         }
 
-                        if (string.IsNullOrWhiteSpace(email) || !IsValidEmail(email))
+                        if (!string.IsNullOrWhiteSpace(email) && !IsValidEmail(email))
                         {
                             resultado.Erros++;
                             resultado.Mensagens.Add($"Linha {row}: E-mail inválido.");
                             continue;
                         }
 
-                        if (string.IsNullOrWhiteSpace(cpf) || !IsValidCpf(cpf))
+                        if (!string.IsNullOrWhiteSpace(cpf) && !IsValidCpf(cpf))
                         {
                             resultado.Erros++;
                             resultado.Mensagens.Add($"Linha {row}: CPF inválido.");
                             continue;
                         }
 
-                        // Remove formatação do CPF
-                        cpf = cpf.Replace(".", "").Replace("-", "").Replace(" ", "");
+                        // Remove formatação do CPF quando informado
+                        cpf = string.IsNullOrWhiteSpace(cpf)
+                            ? ""
+                            : cpf.Replace(".", "").Replace("-", "").Replace(" ", "");
 
                         // Valida função
                         if (!new[] { "acampante", "conselheiro", "admin" }.Contains(funcao.ToLower()))
@@ -84,26 +86,35 @@ namespace EbenezerConnectApi.Services
                         }
 
                         // Verifica se já existe
-                        Console.WriteLine($"[ImportacaoService] Buscando por email: {email}");
-                        var pessoaExistente = await _pessoaRepository.BuscarPorEmail(email);
-                        if (pessoaExistente != null)
+                        if (!string.IsNullOrWhiteSpace(email))
                         {
-                            resultado.Erros++;
-                            resultado.Mensagens.Add($"Linha {row}: E-mail {email} já cadastrado.");
-                            continue;
+                            Console.WriteLine($"[ImportacaoService] Buscando por email: {email}");
+                            var pessoaExistente = await _pessoaRepository.BuscarPorEmail(email);
+                            if (pessoaExistente != null)
+                            {
+                                resultado.Erros++;
+                                resultado.Mensagens.Add($"Linha {row}: E-mail {email} já cadastrado.");
+                                continue;
+                            }
                         }
 
-                        Console.WriteLine($"[ImportacaoService] Buscando por CPF: {cpf}");
-                        var pessoaPorCpf = await _pessoaRepository.BuscarPorCpf(cpf);
-                        if (pessoaPorCpf != null)
+                        if (!string.IsNullOrWhiteSpace(cpf))
                         {
-                            resultado.Erros++;
-                            resultado.Mensagens.Add($"Linha {row}: CPF {cpf} já cadastrado.");
-                            continue;
+                            Console.WriteLine($"[ImportacaoService] Buscando por CPF: {cpf}");
+                            var pessoaPorCpf = await _pessoaRepository.BuscarPorCpf(cpf);
+                            if (pessoaPorCpf != null)
+                            {
+                                resultado.Erros++;
+                                resultado.Mensagens.Add($"Linha {row}: CPF {cpf} já cadastrado.");
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            cpf = await GerarCpfTecnicoUnico();
                         }
 
-                        // Gera senha temporária (ex: 6 primeiros dígitos do CPF)
-                        var senhaTemporaria = cpf.Substring(0, 6);
+                        var senhaTemporaria = GerarSenhaTemporaria(cpf);
 
                         var pessoa = new Pessoa
                         {
@@ -173,22 +184,24 @@ namespace EbenezerConnectApi.Services
                         continue;
                     }
 
-                    if (string.IsNullOrWhiteSpace(email) || !IsValidEmail(email))
+                    if (!string.IsNullOrWhiteSpace(email) && !IsValidEmail(email))
                     {
                         resultado.Erros++;
                         resultado.Mensagens.Add($"Linha {linha}: E-mail inválido.");
                         continue;
                     }
 
-                    if (string.IsNullOrWhiteSpace(cpf) || !IsValidCpf(cpf))
+                    if (!string.IsNullOrWhiteSpace(cpf) && !IsValidCpf(cpf))
                     {
                         resultado.Erros++;
                         resultado.Mensagens.Add($"Linha {linha}: CPF inválido.");
                         continue;
                     }
 
-                    // Remove formatação do CPF
-                    cpf = cpf.Replace(".", "").Replace("-", "").Replace(" ", "");
+                    // Remove formatação do CPF quando informado
+                    cpf = string.IsNullOrWhiteSpace(cpf)
+                        ? ""
+                        : cpf.Replace(".", "").Replace("-", "").Replace(" ", "");
 
                     // Valida função
                     if (!new[] { "acampante", "conselheiro", "admin" }.Contains(funcao.ToLower()))
@@ -197,26 +210,35 @@ namespace EbenezerConnectApi.Services
                     }
 
                     // Verifica se já existe
-                    Console.WriteLine($"[ImportacaoService] Buscando por email: {email}");
-                    var pessoaExistente = await _pessoaRepository.BuscarPorEmail(email);
-                    if (pessoaExistente != null)
+                    if (!string.IsNullOrWhiteSpace(email))
                     {
-                        resultado.Erros++;
-                        resultado.Mensagens.Add($"Linha {linha}: E-mail {email} já cadastrado.");
-                        continue;
+                        Console.WriteLine($"[ImportacaoService] Buscando por email: {email}");
+                        var pessoaExistente = await _pessoaRepository.BuscarPorEmail(email);
+                        if (pessoaExistente != null)
+                        {
+                            resultado.Erros++;
+                            resultado.Mensagens.Add($"Linha {linha}: E-mail {email} já cadastrado.");
+                            continue;
+                        }
                     }
 
-                    Console.WriteLine($"[ImportacaoService] Buscando por CPF: {cpf}");
-                    var pessoaPorCpf = await _pessoaRepository.BuscarPorCpf(cpf);
-                    if (pessoaPorCpf != null)
+                    if (!string.IsNullOrWhiteSpace(cpf))
                     {
-                        resultado.Erros++;
-                        resultado.Mensagens.Add($"Linha {linha}: CPF {cpf} já cadastrado.");
-                        continue;
+                        Console.WriteLine($"[ImportacaoService] Buscando por CPF: {cpf}");
+                        var pessoaPorCpf = await _pessoaRepository.BuscarPorCpf(cpf);
+                        if (pessoaPorCpf != null)
+                        {
+                            resultado.Erros++;
+                            resultado.Mensagens.Add($"Linha {linha}: CPF {cpf} já cadastrado.");
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        cpf = await GerarCpfTecnicoUnico();
                     }
 
-                    // Gera senha temporária (6 primeiros dígitos do CPF)
-                    var senhaTemporaria = cpf.Substring(0, 6);
+                    var senhaTemporaria = GerarSenhaTemporaria(cpf);
 
                     var novaPessoa = new Pessoa
                     {
@@ -263,6 +285,29 @@ namespace EbenezerConnectApi.Services
         {
             cpf = cpf.Replace(".", "").Replace("-", "").Replace(" ", "");
             return cpf.Length == 11 && cpf.All(char.IsDigit);
+        }
+
+        private static string GerarSenhaTemporaria(string cpf)
+        {
+            if (!string.IsNullOrWhiteSpace(cpf) && cpf.Length >= 6)
+            {
+                return cpf.Substring(0, 6);
+            }
+
+            return Random.Shared.Next(100000, 999999).ToString();
+        }
+
+        private async Task<string> GerarCpfTecnicoUnico()
+        {
+            while (true)
+            {
+                var cpfTecnico = Random.Shared.Next(100000000, 999999999).ToString() + Random.Shared.Next(10, 99).ToString();
+                var existente = await _pessoaRepository.BuscarPorCpf(cpfTecnico);
+                if (existente == null)
+                {
+                    return cpfTecnico;
+                }
+            }
         }
     }
 }

@@ -14,6 +14,7 @@ namespace EbenezerConnectApi.Models.Mappings
 
             // Pessoa → DTO de resposta
             CreateMap<Pessoa, PessoaResponseDto>()
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => IsEmailTecnico(src.Email) ? string.Empty : src.Email))
                 .ForMember(dest => dest.QuartoNome, opt => opt.MapFrom(src => src.Quarto != null ? src.Quarto.Nome : null));
 
             // Atualização de dados
@@ -34,6 +35,17 @@ namespace EbenezerConnectApi.Models.Mappings
                 .ForMember(dest => dest.PrecoCompraAtual, opt => opt.MapFrom(src => src.PrecoCompraAtual))
                 .ForMember(dest => dest.PrecoVendaAtual, opt => opt.MapFrom(src => src.PrecoVendaAtual));
 
+        }
+
+        private static bool IsEmailTecnico(string? email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return false;
+            }
+
+            return email.EndsWith("@sem-email.local", StringComparison.OrdinalIgnoreCase)
+                && email.StartsWith("sem-email-", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

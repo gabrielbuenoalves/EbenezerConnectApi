@@ -141,41 +141,6 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 var enableHttpsRedirection = builder.Configuration.GetValue<bool>("AppSettings:EnableHttpsRedirection", !app.Environment.IsProduction());
 
-// 🌱 Seed: Cria usuário admin inicial se não existir (controlado por variável de ambiente)
-var seedAdminEnabled = builder.Configuration.GetValue<bool>("SeedAdmin:Enabled", false);
-if (seedAdminEnabled)
-{
-    using (var scope = app.Services.CreateScope())
-    {
-        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var pessoaRepo = scope.ServiceProvider.GetRequiredService<IPessoaRepository>();
-        
-        var seedEmail = builder.Configuration["SeedAdmin:Email"] ?? "admin@example.com";
-        var seedAdminExistente = pessoaRepo.BuscarPorEmail(seedEmail).Result;
-        
-        if (seedAdminExistente == null)
-        {
-            var adminInicial = new Pessoa
-            {
-                Nome = builder.Configuration["SeedAdmin:Name"] ?? "Admin",
-                Email = seedEmail,
-                Cpf = builder.Configuration["SeedAdmin:Cpf"] ?? "00000000000",
-                Funcao = "admin",
-                SenhaHash = BCrypt.Net.BCrypt.HashPassword(builder.Configuration["SeedAdmin:Password"] ?? "admin123"),
-                EmailConfirmado = true,
-                Saldo = 0
-            };
-            
-            pessoaRepo.AdicionarPessoa(adminInicial).Wait();
-            Console.WriteLine("✅ Usuário admin inicial criado com sucesso!");
-            Console.WriteLine($"   Email: {adminInicial.Email}");
-        }
-        else
-        {
-            Console.WriteLine($"ℹ️  Admin já existente: {seedEmail}");
-        }
-    }
-}
 
 // Middleware global para capturar erros não tratados
 app.Use(async (context, next) =>
