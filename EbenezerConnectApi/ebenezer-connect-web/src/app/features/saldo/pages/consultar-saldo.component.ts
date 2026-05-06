@@ -63,7 +63,7 @@ interface ConsultaSaldoResponse {
               [class.zerado]="r.saldo === 0"
               [class.negativo]="r.saldo < 0"
             >
-              R$ {{ r.saldo | number: '1.2-2' : 'pt-BR' }}
+              {{ r.saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
             </div>
             <div class="pessoa-quarto" *ngIf="r.quartoNome">Quarto: {{ r.quartoNome }}</div>
           </div>
