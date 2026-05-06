@@ -135,7 +135,14 @@ const DIAS = ['QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
                   </div>
                 }
                 <small class="hint">Digite para filtrar e pressione Enter para adicionar o primeiro resultado.</small>
-                @if (erroEntrada) { <div class="erro">{{ erroEntrada }}</div> }
+                @if (erroEntrada) {
+                  <div class="erro" [class.erro-conflito]="ehErroConflitoAgenda">
+                    @if (ehErroConflitoAgenda) {
+                      <strong>Cadastro bloqueado:</strong>
+                    }
+                    {{ erroEntrada }}
+                  </div>
+                }
               </div>
 
               @if (escala.entradas.length > 0) {
@@ -267,6 +274,14 @@ const DIAS = ['QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
       padding: 2rem;
     }
     .erro { color: #dc2626; font-size: 0.8rem; margin-top: 0.5rem; }
+    .erro-conflito {
+      background: #fff7ed;
+      border: 1px solid #fdba74;
+      color: #9a3412;
+      padding: 0.5rem 0.65rem;
+      border-radius: 6px;
+      margin-top: 0.65rem;
+    }
     .escala-card {
       background: #fff;
       border: 1px solid #e2e8f0;
@@ -540,6 +555,10 @@ export class GerenciarEscalasComponent implements OnInit {
     }
 
     return mensagemPadrao;
+  }
+
+  get ehErroConflitoAgenda() {
+    return this.erroEntrada.toLowerCase().includes('conflito de agenda');
   }
 
   formularioEscalaValido() {
