@@ -23,4 +23,8 @@ export class FinanceiroService {
   desfazerEstorno(id: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/desfazer-estorno`, { id, tipo: 'saldo' });
   }
+
+  criarEstorno(id: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/criar-estorno`, { id, tipo: 'saldo' });
+  }
 }

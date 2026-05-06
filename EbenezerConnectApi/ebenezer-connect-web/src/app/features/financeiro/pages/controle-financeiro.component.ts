@@ -61,7 +61,7 @@ import * as XLSX from 'xlsx';
             <td>{{ item.pessoaNome }}</td>
             <td class="tipo">{{ item.tipo === 'cantina' ? 'Cantina' : 'Saldo' }}</td>
             <td>R$ {{ item.valor.toFixed(2) }}</td>
-            <td>{{ item.revertida && item.tipo === 'saldo' ? 'Estorno' : formatarPagamento(item.pagamento) }}</td>
+            <td>{{ item.tipo === 'saldo' && item.valor < 0 ? 'Estorno' : formatarPagamento(item.pagamento) }}</td>
             <td class="itens">
               <span *ngIf="!item.itens || item.itens.length === 0">-</span>
               <span *ngIf="item.itens && item.itens.length > 0">
@@ -69,21 +69,8 @@ import * as XLSX from 'xlsx';
               </span>
             </td>
             <td class="acoes">
-              <ng-container *ngIf="item.revertida">
-                <span *ngIf="item.tipo !== 'saldo'" class="badge">Revertida</span>
-                <button
-                  *ngIf="item.tipo === 'saldo'"
-                  class="btn-desfazer"
-                  (click)="desfazerEstorno(item)"
-                >
-                  Desfazer Estorno
-                </button>
-              </ng-container>
-              <button
-                *ngIf="!item.revertida"
-                class="btn-danger"
-                (click)="abrirModal(item)"
-              >
+              <span *ngIf="item.revertida" class="badge">Revertida</span>
+              <button *ngIf="!item.revertida" class="btn-danger" (click)="abrirModal(item)">
                 Reverter
               </button>
             </td>

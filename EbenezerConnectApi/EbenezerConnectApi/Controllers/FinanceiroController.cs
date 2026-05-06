@@ -1,4 +1,5 @@
 using EbenezerConnectApi.Models.Dtos;
+using EbenezerConnectApi.Models.Entities;
 using EbenezerConnectApi.Repository;
 using EbenezerConnectApi.Helpers;
 using Microsoft.AspNetCore.Authorization;
@@ -160,6 +161,34 @@ namespace EbenezerConnectApi.Controllers
                 await transaction.RollbackAsync();
                 return StatusCode(500, new { erro = "Erro ao reverter: " + ex.Message });
             }
+        }
+
+        [Authorize]
+        [HttpPost("criar-estorno")]
+        public async Task<IActionResult> CriarEstorno([FromBody] ReverterFinanceiroDto dto)
+        {
+            var credito = await _context.AdicaoSaldo
+                .Include(c => c.Pessoa)
+                .FirstOrDefaultAsync(c => c.Id == dto.Id && !c.Revertida && c.Valor > 0);
+
+            if (credito == null)
+                return NotFound(new { erro = "Credito nao encontrado ou ja estornado." });
+
+            var estorno = new AdicaoSaldo
+            {
+                PessoaId = credito.PessoaId,
+                Valor = -credito.Valor,
+                DataAdicao = DateTimeHelper.NowBrasilia(),
+                Revertida = false
+            };
+
+            credito.Pessoa.Saldo -= (double)credito.Valor;
+            _context.Pessoa.Update(credito.Pessoa);
+            _context.AdicaoSaldo.Add(estorno);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { mensagem = "Estorno realizado com sucesso." });
         }
 
         [Authorize]

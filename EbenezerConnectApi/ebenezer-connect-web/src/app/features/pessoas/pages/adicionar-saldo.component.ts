@@ -663,7 +663,7 @@ export class AdicionarSaldoComponent implements OnInit {
     this.financeiroService.getHistorico().subscribe({
       next: (historico) => {
         this.creditosDaPessoa = historico.filter(
-          h => h.tipo === 'saldo' && h.pessoaId === pessoaId && !h.revertida
+          h => h.tipo === 'saldo' && h.pessoaId === pessoaId && !h.revertida && h.valor > 0
         );
         this.cdr.detectChanges();
       },
@@ -680,7 +680,7 @@ export class AdicionarSaldoComponent implements OnInit {
     if (!this.creditoParaEstornar) return;
     this.processandoEstorno = true;
 
-    this.financeiroService.reverter({ id: this.creditoParaEstornar.id, tipo: 'saldo' }).subscribe({
+    this.financeiroService.criarEstorno(this.creditoParaEstornar.id).subscribe({
       next: () => {
         alert(`Estorno de R$ ${this.creditoParaEstornar!.valor.toFixed(2)} realizado com sucesso!`);
         this.modalEstornoAberta = false;
