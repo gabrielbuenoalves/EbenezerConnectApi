@@ -7,6 +7,12 @@ import { MainLayoutComponent } from './shared/layouts/main-layout.component';
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   
+  // Public Routes
+  {
+    path: 'saldo/consultar',
+    loadComponent: () => import('./features/saldo/pages/consultar-saldo.component').then(m => m.ConsultarSaldoComponent)
+  },
+
   // Auth Routes
   {
     path: 'auth',
