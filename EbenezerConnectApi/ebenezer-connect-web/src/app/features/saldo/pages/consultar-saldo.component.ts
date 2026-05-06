@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 interface ConsultaSaldoResponse {
@@ -13,7 +13,7 @@ interface ConsultaSaldoResponse {
 @Component({
   selector: 'app-consultar-saldo',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <div class="consulta-container">
       <div class="consulta-card">
@@ -25,12 +25,8 @@ interface ConsultaSaldoResponse {
         <div class="form-group">
           <label>Buscar por</label>
           <div class="tipo-busca">
-            <button [class.active]="tipoBusca === 'cpf'" (click)="tipoBusca = 'cpf'; limpar()">
-              CPF
-            </button>
-            <button [class.active]="tipoBusca === 'nome'" (click)="tipoBusca = 'nome'; limpar()">
-              Nome
-            </button>
+            <button [class.active]="tipoBusca === 'cpf'" (click)="tipoBusca = 'cpf'; limpar()">CPF</button>
+            <button [class.active]="tipoBusca === 'nome'" (click)="tipoBusca = 'nome'; limpar()">Nome</button>
           </div>
         </div>
 
@@ -43,31 +39,32 @@ interface ConsultaSaldoResponse {
           />
         </div>
 
-        <button
-          class="btn-primary"
-          (click)="consultar()"
-          [disabled]="loading || !termoBusca.trim()"
-        >
-          <span *ngIf="!loading">Consultar</span>
-          <span *ngIf="loading">Consultando...</span>
+        <button class="btn-primary" (click)="consultar()" [disabled]="loading || !termoBusca.trim()">
+          @if (loading) { Consultando... } @else { Consultar }
         </button>
 
-        <div class="error-message" *ngIf="erro">{{ erro }}</div>
+        @if (erro) {
+          <div class="error-message">{{ erro }}</div>
+        }
 
-        <div class="resultado" *ngIf="resultados.length > 0">
-          <div class="resultado-item" *ngFor="let r of resultados">
-            <div class="pessoa-nome">{{ r.nome }}</div>
-            <div
-              class="pessoa-saldo"
-              [class.positivo]="r.saldo > 0"
-              [class.zerado]="r.saldo === 0"
-              [class.negativo]="r.saldo < 0"
-            >
-              {{ r.saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}
-            </div>
-            <div class="pessoa-quarto" *ngIf="r.quartoNome">Quarto: {{ r.quartoNome }}</div>
+        @if (resultados.length > 0) {
+          <div class="resultado">
+            @for (r of resultados; track r.nome) {
+              <div class="resultado-item">
+                <div class="pessoa-nome">{{ r.nome }}</div>
+                <div class="pessoa-saldo"
+                  [class.positivo]="r.saldo > 0"
+                  [class.zerado]="r.saldo === 0"
+                  [class.negativo]="r.saldo < 0">
+                  {{ formatSaldo(r.saldo) }}
+                </div>
+                @if (r.quartoNome) {
+                  <div class="pessoa-quarto">Quarto: {{ r.quartoNome }}</div>
+                }
+              </div>
+            }
           </div>
-        </div>
+        }
       </div>
     </div>
   `,
@@ -214,7 +211,11 @@ export class ConsultarSaldoComponent {
 
   private apiUrl = `${environment.apiUrl}/saldo/consultar`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
+
+  formatSaldo(saldo: number): string {
+    return saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
 
   limpar() {
     this.termoBusca = '';
@@ -222,28 +223,26 @@ export class ConsultarSaldoComponent {
     this.resultados = [];
   }
 
-  consultar() {
+  async consultar() {
     if (!this.termoBusca.trim()) return;
     this.loading = true;
     this.erro = '';
     this.resultados = [];
+    this.cdr.detectChanges();
 
-    const params = new HttpParams().set(this.tipoBusca, this.termoBusca.trim());
-
-    this.http.get<unknown>(this.apiUrl, { params }).subscribe({
-      next: (res) => {
-        const data = res as unknown;
-        this.resultados = Array.isArray(data)
-          ? (data as ConsultaSaldoResponse[])
-          : [data as ConsultaSaldoResponse];
-        if (this.resultados.length === 0) this.erro = 'Nenhum resultado encontrado.';
-        this.loading = false;
-      },
-      error: (err) => {
-        this.erro =
-          err.status === 404 ? 'Pessoa não encontrada.' : 'Erro ao consultar. Tente novamente.';
-        this.loading = false;
-      },
-    });
+    try {
+      const params = new HttpParams().set(this.tipoBusca, this.termoBusca.trim());
+      const res = await firstValueFrom(this.http.get<unknown>(this.apiUrl, { params }));
+      const data = res as unknown;
+      this.resultados = Array.isArray(data)
+        ? (data as ConsultaSaldoResponse[])
+        : [data as ConsultaSaldoResponse];
+      if (this.resultados.length === 0) this.erro = 'Nenhum resultado encontrado.';
+    } catch {
+      this.erro = 'Pessoa não encontrada.';
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
   }
 }
