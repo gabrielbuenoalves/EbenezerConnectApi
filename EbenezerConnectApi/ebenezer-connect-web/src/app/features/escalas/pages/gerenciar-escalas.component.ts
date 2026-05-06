@@ -360,6 +360,7 @@ export class GerenciarEscalasComponent implements OnInit {
   erroEntrada = '';
   conselheiroBusca = '';
   mostrarDropdownConselheiros = false;
+  ehErroConflitoFlag = false;
   DIAS = DIAS;
 
   novaEscala = { nome: '', dataInicio: '', dataFim: '' };
@@ -392,6 +393,7 @@ export class GerenciarEscalasComponent implements OnInit {
     this.erroEntrada = '';
     this.conselheiroBusca = '';
     this.mostrarDropdownConselheiros = false;
+    this.ehErroConflitoFlag = false;
     this.cdr.detectChanges();
   }
 
@@ -453,8 +455,12 @@ export class GerenciarEscalasComponent implements OnInit {
       this.novaEntrada = this.entradaVazia();
       this.conselheiroBusca = '';
       this.mostrarDropdownConselheiros = false;
+      this.ehErroConflitoFlag = false;
     } catch (error: any) {
-      this.erroEntrada = this.extrairMensagemErro(error, 'Erro ao adicionar entrada.');
+      const mensagem = this.extrairMensagemErro(error, 'Erro ao adicionar entrada.');
+      this.erroEntrada = mensagem;
+      const m = (mensagem || '').toLowerCase();
+      this.ehErroConflitoFlag = m.includes('conflito de agenda') || m.includes('conflito de descanso') || m.includes('descanso insuficiente');
     } finally {
       this.adicionando = false;
       this.cdr.detectChanges();
