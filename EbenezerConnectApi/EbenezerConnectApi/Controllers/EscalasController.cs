@@ -52,6 +52,16 @@ namespace EbenezerConnectApi.Controllers
         [HttpPost]
         public async Task<IActionResult> Criar([FromBody] CriarEscalaEventoDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                return ValidationProblem(ModelState);
+            }
+
+            if (dto.DataInicio.HasValue && dto.DataFim.HasValue && dto.DataFim.Value < dto.DataInicio.Value)
+            {
+                return BadRequest(new { erro = "A data/hora final deve ser maior que a inicial." });
+            }
+
             var escala = _mapper.Map<EscalaEvento>(dto);
             escala.CriadoEm = DateTime.UtcNow;
             _context.EscalaEvento.Add(escala);

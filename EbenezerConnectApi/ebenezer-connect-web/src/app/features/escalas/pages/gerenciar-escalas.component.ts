@@ -44,10 +44,10 @@ const DIAS = ['QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
         <div class="form-card">
           <h3>Nova Escala</h3>
           <div class="form-row">
-            <input [(ngModel)]="novaEscala.nome" placeholder="Nome do evento" class="input" />
-            <input [(ngModel)]="novaEscala.dataInicio" type="date" class="input" />
-            <input [(ngModel)]="novaEscala.dataFim" type="date" class="input" />
-            <button class="btn-primary" (click)="criarEscala()" [disabled]="salvando || !novaEscala.nome.trim()">
+            <input [(ngModel)]="novaEscala.nome" placeholder="Nome do evento" class="input" required />
+            <input [(ngModel)]="novaEscala.dataInicio" type="datetime-local" class="input" required />
+            <input [(ngModel)]="novaEscala.dataFim" type="datetime-local" class="input" required />
+            <button class="btn-primary" (click)="criarEscala()" [disabled]="salvando || !formularioEscalaValido()">
               {{ salvando ? 'Salvando...' : 'Criar' }}
             </button>
           </div>
@@ -65,7 +65,7 @@ const DIAS = ['QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
             <div>
               <span class="escala-nome">{{ escala.nome }}</span>
               @if (escala.dataInicio) {
-                <span class="escala-datas"> · {{ escala.dataInicio | date:'dd/MM/yyyy' }} – {{ escala.dataFim | date:'dd/MM/yyyy' }}</span>
+                <span class="escala-datas"> · {{ escala.dataInicio | date:'dd/MM/yyyy HH:mm' }} – {{ escala.dataFim | date:'dd/MM/yyyy HH:mm' }}</span>
               }
             </div>
             <div class="header-actions">
@@ -294,7 +294,7 @@ export class GerenciarEscalasComponent implements OnInit {
   }
 
   async criarEscala() {
-    if (!this.novaEscala.nome.trim()) return;
+    if (!this.formularioEscalaValido()) return;
     this.salvando = true;
     this.erroGlobal = '';
     try {
@@ -309,8 +309,8 @@ export class GerenciarEscalasComponent implements OnInit {
       this.novaEscala = { nome: '', dataInicio: '', dataFim: '' };
       this.mostrarFormNovo = false;
       this.expandido = criada.id;
-    } catch {
-      this.erroGlobal = 'Erro ao criar escala.';
+    } catch (error: any) {
+      this.erroGlobal = this.extrairMensagemErro(error, 'Erro ao criar escala.');
     } finally {
       this.salvando = false;
       this.cdr.detectChanges();
@@ -378,5 +378,38 @@ export class GerenciarEscalasComponent implements OnInit {
       capacidadeMaxima: null as number | null,
       destaque: false,
     };
+  }
+
+  private extrairMensagemErro(error: any, mensagemPadrao: string) {
+    const resposta = error?.error;
+
+    if (typeof resposta === 'string' && resposta.trim()) {
+      return resposta;
+    }
+
+    if (resposta?.erro) {
+      return resposta.erro;
+    }
+
+    if (resposta?.title) {
+      return resposta.title;
+    }
+
+    if (resposta?.message) {
+      return resposta.message;
+    }
+
+    if (resposta?.errors) {
+      const mensagens = Object.values(resposta.errors).flat() as string[];
+      if (mensagens.length > 0) {
+        return mensagens[0];
+      }
+    }
+
+    return mensagemPadrao;
+  }
+
+  private formularioEscalaValido() {
+    return !!this.novaEscala.nome.trim() && !!this.novaEscala.dataInicio && !!this.novaEscala.dataFim;
   }
 }

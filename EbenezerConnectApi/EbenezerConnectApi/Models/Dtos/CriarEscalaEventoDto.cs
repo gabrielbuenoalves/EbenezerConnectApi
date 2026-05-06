@@ -8,8 +8,12 @@ namespace EbenezerConnectApi.Models.Dtos
         [StringLength(200)]
         public string Nome { get; set; } = string.Empty;
 
+        [Required]
+        [DataType(DataType.DateTime)]
         public DateTime? DataInicio { get; set; }
 
+        [Required]
+        [DataType(DataType.DateTime)]
         public DateTime? DataFim { get; set; }
     }
 }
