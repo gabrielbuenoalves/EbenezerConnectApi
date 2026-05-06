@@ -130,11 +130,90 @@ namespace EbenezerConnectApi.Controllers
             if (escala == null)
                 return NotFound(new { erro = "Escala não encontrada." });
 
+            if (!TimeSpan.TryParse(dto.HorarioInicio, out var novoHorarioInicio) ||
+                !TimeSpan.TryParse(dto.HorarioFim, out var novoHorarioFim))
+            {
+                return BadRequest(new { erro = "Horário inválido. Use o formato HH:mm." });
+            }
+
+            if (novoHorarioFim <= novoHorarioInicio)
+            {
+                return BadRequest(new { erro = "O horário final deve ser maior que o inicial." });
+            }
+
+            var nomesConselheiros = dto.NomesConselheiros
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Select(n => n.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (nomesConselheiros.Count == 0 && !string.IsNullOrWhiteSpace(dto.NomeConselheiro))
+            {
+                nomesConselheiros.Add(dto.NomeConselheiro.Trim());
+            }
+
+            if (nomesConselheiros.Count == 0)
+            {
+                return BadRequest(new { erro = "Selecione pelo menos um conselheiro." });
+            }
+
+            var nomesConselheirosConcatenado = string.Join(", ", nomesConselheiros);
+            if (nomesConselheirosConcatenado.Length > 100)
+            {
+                return BadRequest(new { erro = "Nomes dos conselheiros excedem o limite de 100 caracteres." });
+            }
+
+            var entradasMesmoDia = await _context.EscalaEntrada
+                .Where(e => e.EscalaEventoId == id && e.Dia == dto.Dia)
+                .ToListAsync();
+
+            foreach (var entradaExistente in entradasMesmoDia)
+            {
+                if (!TimeSpan.TryParse(entradaExistente.HorarioInicio, out var horarioInicioExistente) ||
+                    !TimeSpan.TryParse(entradaExistente.HorarioFim, out var horarioFimExistente))
+                {
+                    continue;
+                }
+
+                if (!HorariosConflitam(novoHorarioInicio, novoHorarioFim, horarioInicioExistente, horarioFimExistente))
+                {
+                    continue;
+                }
+
+                var conselheirosExistentes = ExtrairConselheiros(entradaExistente.NomeConselheiro);
+                var conselheiroEmConflito = nomesConselheiros
+                    .FirstOrDefault(nome => conselheirosExistentes.Contains(nome, StringComparer.OrdinalIgnoreCase));
+
+                if (conselheiroEmConflito != null)
+                {
+                    return BadRequest(new
+                    {
+                        erro = $"Conflito de agenda: {conselheiroEmConflito} já está escalado em {entradaExistente.Atividade} ({entradaExistente.HorarioInicio}-{entradaExistente.HorarioFim}) no dia {dto.Dia}."
+                    });
+                }
+            }
+
             var entrada = _mapper.Map<EscalaEntrada>(dto);
+            entrada.NomeConselheiro = nomesConselheirosConcatenado;
             entrada.EscalaEventoId = id;
             _context.EscalaEntrada.Add(entrada);
             await _context.SaveChangesAsync();
             return Ok(_mapper.Map<EscalaEntradaResponseDto>(entrada));
+        }
+
+        private static bool HorariosConflitam(TimeSpan inicioA, TimeSpan fimA, TimeSpan inicioB, TimeSpan fimB)
+        {
+            return inicioA < fimB && inicioB < fimA;
+        }
+
+        private static List<string> ExtrairConselheiros(string nomesConselheiros)
+        {
+            return nomesConselheiros
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(nome => nome.Trim())
+                .Where(nome => !string.IsNullOrWhiteSpace(nome))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
 
         [Authorize(Roles = "admin")]

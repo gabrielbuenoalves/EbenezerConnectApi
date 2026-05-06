@@ -312,7 +312,14 @@ export class VisualizarEscalaComponent implements OnInit {
           conselheiros: [],
         });
       }
-      atvMap.get(e.atividade)!.conselheiros.push({ nome: e.nomeConselheiro, destaque: e.destaque });
+      const nomes = e.nomeConselheiro
+        .split(',')
+        .map(nome => nome.trim())
+        .filter(nome => nome.length > 0);
+
+      for (const nome of nomes) {
+        atvMap.get(e.atividade)!.conselheiros.push({ nome, destaque: e.destaque });
+      }
     }
 
     const result: DiaGroup[] = [];

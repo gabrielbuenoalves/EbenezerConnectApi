@@ -16,6 +16,11 @@ interface EscalaEntradaDto {
   destaque: boolean;
 }
 
+interface PessoaResumoDto {
+  id: number;
+  nome: string;
+}
+
 interface EscalaEventoDto {
   id: number;
   nome: string;
@@ -89,7 +94,11 @@ const DIAS = ['QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
                   <input [(ngModel)]="novaEntrada.horarioInicio" placeholder="Início (07:00)" class="input input-sm" />
                   <input [(ngModel)]="novaEntrada.horarioFim" placeholder="Fim (09:30)" class="input input-sm" />
                   <input [(ngModel)]="novaEntrada.atividade" placeholder="Atividade" class="input" />
-                  <input [(ngModel)]="novaEntrada.nomeConselheiro" placeholder="Nome" class="input" />
+                  <select [(ngModel)]="novaEntrada.nomesConselheiros" class="input select-multi" multiple>
+                    @for (conselheiro of conselheiros; track conselheiro.id) {
+                      <option [ngValue]="conselheiro.nome">{{ conselheiro.nome }}</option>
+                    }
+                  </select>
                   <input [(ngModel)]="novaEntrada.capacidadeMaxima" type="number" placeholder="Cap." class="input input-xs" min="1" />
                   <label class="check-label">
                     <input type="checkbox" [(ngModel)]="novaEntrada.destaque" />
@@ -98,10 +107,11 @@ const DIAS = ['QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
                   <button
                     class="btn-primary"
                     (click)="adicionarEntrada(escala.id)"
-                    [disabled]="adicionando || !novaEntrada.dia || !novaEntrada.nomeConselheiro.trim()">
+                    [disabled]="adicionando || !novaEntrada.dia || novaEntrada.nomesConselheiros.length === 0">
                     {{ adicionando ? '...' : 'Adicionar' }}
                   </button>
                 </div>
+                <small class="hint">Conselheiros: segure Command para selecionar mais de um.</small>
                 @if (erroEntrada) { <div class="erro">{{ erroEntrada }}</div> }
               </div>
 
@@ -180,6 +190,7 @@ const DIAS = ['QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
       background: #fff;
     }
     .input.select { flex: 0 0 auto; min-width: 100px; }
+    .input.select-multi { flex: 0 0 260px; min-height: 88px; }
     .input.input-sm { flex: 0 0 100px; }
     .input.input-xs { flex: 0 0 70px; }
     .btn-primary {
@@ -234,6 +245,7 @@ const DIAS = ['QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
     .add-entrada-form { margin-bottom: 1.25rem; }
     .add-entrada-form h4 { margin: 0 0 0.75rem; font-size: 0.875rem; color: #475569; font-weight: 600; }
     .check-label { display: flex; align-items: center; gap: 0.375rem; font-size: 0.875rem; color: #475569; white-space: nowrap; }
+    .hint { display: block; color: #64748b; margin-top: 0.4rem; font-size: 0.75rem; }
     .tabela { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
     .tabela th {
       text-align: left;
@@ -254,6 +266,7 @@ const DIAS = ['QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
 })
 export class GerenciarEscalasComponent implements OnInit {
   escalas: EscalaEventoDto[] = [];
+  conselheiros: PessoaResumoDto[] = [];
   loading = true;
   salvando = false;
   adicionando = false;
@@ -267,11 +280,12 @@ export class GerenciarEscalasComponent implements OnInit {
   novaEntrada = this.entradaVazia();
 
   private apiUrl = `${environment.apiUrl}/escalas`;
+  private pessoaApiUrl = `${environment.apiUrl}/pessoa`;
 
   constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
 
   async ngOnInit() {
-    await this.carregarEscalas();
+    await Promise.all([this.carregarEscalas(), this.carregarConselheiros()]);
   }
 
   async carregarEscalas() {
@@ -331,7 +345,7 @@ export class GerenciarEscalasComponent implements OnInit {
   }
 
   async adicionarEntrada(escalaId: number) {
-    if (!this.novaEntrada.dia || !this.novaEntrada.nomeConselheiro.trim()) return;
+    if (!this.novaEntrada.dia || this.novaEntrada.nomesConselheiros.length === 0) return;
     this.adicionando = true;
     this.erroEntrada = '';
     try {
@@ -341,7 +355,7 @@ export class GerenciarEscalasComponent implements OnInit {
           horarioInicio: this.novaEntrada.horarioInicio,
           horarioFim: this.novaEntrada.horarioFim,
           atividade: this.novaEntrada.atividade,
-          nomeConselheiro: this.novaEntrada.nomeConselheiro,
+          nomesConselheiros: this.novaEntrada.nomesConselheiros,
           capacidadeMaxima: this.novaEntrada.capacidadeMaxima || null,
           destaque: this.novaEntrada.destaque,
         })
@@ -368,13 +382,25 @@ export class GerenciarEscalasComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  async carregarConselheiros() {
+    try {
+      this.conselheiros = await firstValueFrom(
+        this.http.get<PessoaResumoDto[]>(`${this.pessoaApiUrl}/funcao/conselheiro`)
+      );
+    } catch {
+      this.erroEntrada = 'Erro ao carregar conselheiros cadastrados.';
+    } finally {
+      this.cdr.detectChanges();
+    }
+  }
+
   private entradaVazia() {
     return {
       dia: '',
       horarioInicio: '',
       horarioFim: '',
       atividade: '',
-      nomeConselheiro: '',
+      nomesConselheiros: [] as string[],
       capacidadeMaxima: null as number | null,
       destaque: false,
     };

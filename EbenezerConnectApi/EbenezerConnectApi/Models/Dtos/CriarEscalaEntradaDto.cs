@@ -22,9 +22,10 @@ namespace EbenezerConnectApi.Models.Dtos
 
         public int? CapacidadeMaxima { get; set; }
 
-        [Required]
         [StringLength(100)]
-        public string NomeConselheiro { get; set; } = string.Empty;
+        public string? NomeConselheiro { get; set; }
+
+        public List<string> NomesConselheiros { get; set; } = new();
 
         public bool Destaque { get; set; } = false;
     }
