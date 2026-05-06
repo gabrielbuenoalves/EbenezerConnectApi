@@ -174,22 +174,63 @@ namespace EbenezerConnectApi.Controllers
                 {
                     continue;
                 }
-
-                if (!HorariosConflitam(novoHorarioInicio, novoHorarioFim, horarioInicioExistente, horarioFimExistente))
+                // If intervals overlap → direct conflict
+                if (HorariosConflitam(novoHorarioInicio, novoHorarioFim, horarioInicioExistente, horarioFimExistente))
                 {
+                    var conselheirosExistentes = ExtrairConselheiros(entradaExistente.NomeConselheiro);
+                    var conselheiroEmConflito = nomesConselheiros
+                        .FirstOrDefault(nome => conselheirosExistentes.Contains(nome, StringComparer.OrdinalIgnoreCase));
+
+                    if (conselheiroEmConflito != null)
+                    {
+                        return BadRequest(new
+                        {
+                            erro = $"Conflito de agenda: {conselheiroEmConflito} já está escalado em {entradaExistente.Atividade} ({entradaExistente.HorarioInicio}-{entradaExistente.HorarioFim}) no dia {dto.Dia}."
+                        });
+                    }
+
                     continue;
                 }
 
-                var conselheirosExistentes = ExtrairConselheiros(entradaExistente.NomeConselheiro);
-                var conselheiroEmConflito = nomesConselheiros
-                    .FirstOrDefault(nome => conselheirosExistentes.Contains(nome, StringComparer.OrdinalIgnoreCase));
-
-                if (conselheiroEmConflito != null)
+                // If not overlapping, enforce 1 hour rest between end of one and start of other
+                // Case A: existing ends before new starts
+                if (horarioFimExistente <= novoHorarioInicio)
                 {
-                    return BadRequest(new
+                    var gap = novoHorarioInicio - horarioFimExistente; // TimeSpan
+                    if (gap < TimeSpan.FromHours(1))
                     {
-                        erro = $"Conflito de agenda: {conselheiroEmConflito} já está escalado em {entradaExistente.Atividade} ({entradaExistente.HorarioInicio}-{entradaExistente.HorarioFim}) no dia {dto.Dia}."
-                    });
+                        var conselheirosExistentes = ExtrairConselheiros(entradaExistente.NomeConselheiro);
+                        var conselheiroEmConflito = nomesConselheiros
+                            .FirstOrDefault(nome => conselheirosExistentes.Contains(nome, StringComparer.OrdinalIgnoreCase));
+
+                        if (conselheiroEmConflito != null)
+                        {
+                            return BadRequest(new
+                            {
+                                erro = $"Conflito de descanso: {conselheiroEmConflito} precisa de 1h de descanso entre {entradaExistente.Atividade} ({entradaExistente.HorarioInicio}-{entradaExistente.HorarioFim}) e nova atividade ({dto.HorarioInicio}-{dto.HorarioFim}) no dia {dto.Dia}."
+                            });
+                        }
+                    }
+                }
+
+                // Case B: existing starts after new ends
+                if (horarioInicioExistente >= novoHorarioFim)
+                {
+                    var gap = horarioInicioExistente - novoHorarioFim;
+                    if (gap < TimeSpan.FromHours(1))
+                    {
+                        var conselheirosExistentes = ExtrairConselheiros(entradaExistente.NomeConselheiro);
+                        var conselheiroEmConflito = nomesConselheiros
+                            .FirstOrDefault(nome => conselheirosExistentes.Contains(nome, StringComparer.OrdinalIgnoreCase));
+
+                        if (conselheiroEmConflito != null)
+                        {
+                            return BadRequest(new
+                            {
+                                erro = $"Conflito de descanso: {conselheiroEmConflito} precisa de 1h de descanso entre nova atividade ({dto.HorarioInicio}-{dto.HorarioFim}) e {entradaExistente.Atividade} ({entradaExistente.HorarioInicio}-{entradaExistente.HorarioFim}) no dia {dto.Dia}."
+                            });
+                        }
+                    }
                 }
             }
 

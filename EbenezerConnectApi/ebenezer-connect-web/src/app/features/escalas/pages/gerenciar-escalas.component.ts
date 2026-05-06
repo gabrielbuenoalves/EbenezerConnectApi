@@ -562,7 +562,8 @@ export class GerenciarEscalasComponent implements OnInit {
   }
 
   get ehErroConflitoAgenda() {
-    return this.erroEntrada.toLowerCase().includes('conflito de agenda');
+    const m = this.erroEntrada.toLowerCase();
+    return m.includes('conflito de agenda') || m.includes('conflito de descanso') || m.includes('descanso insuficiente');
   }
 
   formularioEscalaValido() {
