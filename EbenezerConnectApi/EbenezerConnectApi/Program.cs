@@ -117,7 +117,7 @@ builder.Services.AddScoped<IImportacaoService, ImportacaoService>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
+        ServerVersion.Parse("8.0.0-mysql")
     ));
 // JWT Auth
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

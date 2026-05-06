@@ -45,6 +45,10 @@ import { User } from '../../core/models';
             <span class="icon">📤</span>
             <span>Saída de Produtos</span>
           </a>
+          <a routerLink="/escalas" routerLinkActive="active" class="nav-item">
+            <span class="icon">📋</span>
+            <span>Escalas</span>
+          </a>
         </nav>
 
         <div class="sidebar-footer">

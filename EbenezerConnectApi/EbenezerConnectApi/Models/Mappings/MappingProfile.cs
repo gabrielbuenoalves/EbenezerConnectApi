@@ -35,6 +35,10 @@ namespace EbenezerConnectApi.Models.Mappings
                 .ForMember(dest => dest.PrecoCompraAtual, opt => opt.MapFrom(src => src.PrecoCompraAtual))
                 .ForMember(dest => dest.PrecoVendaAtual, opt => opt.MapFrom(src => src.PrecoVendaAtual));
 
+            CreateMap<CriarEscalaEventoDto, EscalaEvento>();
+            CreateMap<EscalaEvento, EscalaEventoResponseDto>();
+            CreateMap<CriarEscalaEntradaDto, EscalaEntrada>();
+            CreateMap<EscalaEntrada, EscalaEntradaResponseDto>();
         }
 
         private static bool IsEmailTecnico(string? email)

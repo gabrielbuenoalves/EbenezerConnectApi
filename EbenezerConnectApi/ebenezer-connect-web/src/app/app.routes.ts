@@ -12,6 +12,10 @@ export const routes: Routes = [
     path: 'saldo/consultar',
     loadComponent: () => import('./features/saldo/pages/consultar-saldo.component').then(m => m.ConsultarSaldoComponent)
   },
+  {
+    path: 'escala',
+    loadComponent: () => import('./features/escalas/pages/visualizar-escala.component').then(m => m.VisualizarEscalaComponent)
+  },
 
   // Auth Routes
   {
@@ -66,6 +70,11 @@ export const routes: Routes = [
       {
         path: 'saida-produtos',
         loadComponent: () => import('./features/saida-produtos/pages/saida-produtos.component').then(m => m.SaidaProdutosComponent)
+      },
+      {
+        path: 'escalas',
+        loadComponent: () => import('./features/escalas/pages/gerenciar-escalas.component').then(m => m.GerenciarEscalasComponent),
+        canActivate: [adminGuard]
       }
     ]
   },

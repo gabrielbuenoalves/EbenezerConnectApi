@@ -1,0 +1,382 @@
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+
+interface EscalaEntradaDto {
+  id: number;
+  dia: string;
+  horarioInicio: string;
+  horarioFim: string;
+  atividade: string;
+  capacidadeMaxima?: number;
+  nomeConselheiro: string;
+  destaque: boolean;
+}
+
+interface EscalaEventoDto {
+  id: number;
+  nome: string;
+  dataInicio?: string;
+  dataFim?: string;
+  ativo: boolean;
+  entradas: EscalaEntradaDto[];
+}
+
+const DIAS = ['QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
+
+@Component({
+  selector: 'app-gerenciar-escalas',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
+    <div class="page">
+      <div class="page-header">
+        <h2>Escalas</h2>
+        <button class="btn-primary" (click)="mostrarFormNovo = !mostrarFormNovo">
+          {{ mostrarFormNovo ? 'Cancelar' : '+ Nova Escala' }}
+        </button>
+      </div>
+
+      @if (mostrarFormNovo) {
+        <div class="form-card">
+          <h3>Nova Escala</h3>
+          <div class="form-row">
+            <input [(ngModel)]="novaEscala.nome" placeholder="Nome do evento" class="input" />
+            <input [(ngModel)]="novaEscala.dataInicio" type="date" class="input" />
+            <input [(ngModel)]="novaEscala.dataFim" type="date" class="input" />
+            <button class="btn-primary" (click)="criarEscala()" [disabled]="salvando || !novaEscala.nome.trim()">
+              {{ salvando ? 'Salvando...' : 'Criar' }}
+            </button>
+          </div>
+          @if (erroGlobal) { <div class="erro">{{ erroGlobal }}</div> }
+        </div>
+      }
+
+      @if (loading) {
+        <div class="loading">Carregando...</div>
+      }
+
+      @for (escala of escalas; track escala.id) {
+        <div class="escala-card">
+          <div class="escala-header" (click)="toggleExpand(escala.id)">
+            <div>
+              <span class="escala-nome">{{ escala.nome }}</span>
+              @if (escala.dataInicio) {
+                <span class="escala-datas"> · {{ escala.dataInicio | date:'dd/MM/yyyy' }} – {{ escala.dataFim | date:'dd/MM/yyyy' }}</span>
+              }
+            </div>
+            <div class="header-actions">
+              <span class="count">{{ escala.entradas.length }} entradas</span>
+              <button class="btn-danger-sm" (click)="excluirEscala(escala.id, $event)">Excluir</button>
+              <span class="chevron">{{ expandido === escala.id ? '▲' : '▼' }}</span>
+            </div>
+          </div>
+
+          @if (expandido === escala.id) {
+            <div class="escala-body">
+              <div class="add-entrada-form">
+                <h4>Adicionar Entrada</h4>
+                <div class="form-row">
+                  <select [(ngModel)]="novaEntrada.dia" class="input select">
+                    <option value="">Dia</option>
+                    @for (d of DIAS; track d) {
+                      <option [value]="d">{{ d }}</option>
+                    }
+                  </select>
+                  <input [(ngModel)]="novaEntrada.horarioInicio" placeholder="Início (07:00)" class="input input-sm" />
+                  <input [(ngModel)]="novaEntrada.horarioFim" placeholder="Fim (09:30)" class="input input-sm" />
+                  <input [(ngModel)]="novaEntrada.atividade" placeholder="Atividade" class="input" />
+                  <input [(ngModel)]="novaEntrada.nomeConselheiro" placeholder="Nome" class="input" />
+                  <input [(ngModel)]="novaEntrada.capacidadeMaxima" type="number" placeholder="Cap." class="input input-xs" min="1" />
+                  <label class="check-label">
+                    <input type="checkbox" [(ngModel)]="novaEntrada.destaque" />
+                    Destaque
+                  </label>
+                  <button
+                    class="btn-primary"
+                    (click)="adicionarEntrada(escala.id)"
+                    [disabled]="adicionando || !novaEntrada.dia || !novaEntrada.nomeConselheiro.trim()">
+                    {{ adicionando ? '...' : 'Adicionar' }}
+                  </button>
+                </div>
+                @if (erroEntrada) { <div class="erro">{{ erroEntrada }}</div> }
+              </div>
+
+              @if (escala.entradas.length > 0) {
+                <table class="tabela">
+                  <thead>
+                    <tr>
+                      <th>Dia</th>
+                      <th>Horário</th>
+                      <th>Atividade</th>
+                      <th>Nome</th>
+                      <th>Cap.</th>
+                      <th>Dest.</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (e of escala.entradas; track e.id) {
+                      <tr>
+                        <td>{{ e.dia }}</td>
+                        <td class="nowrap">{{ e.horarioInicio }} – {{ e.horarioFim }}</td>
+                        <td>{{ e.atividade }}</td>
+                        <td [class.destaque]="e.destaque">{{ e.nomeConselheiro }}</td>
+                        <td>{{ e.capacidadeMaxima ?? '–' }}</td>
+                        <td>{{ e.destaque ? 'Sim' : '' }}</td>
+                        <td>
+                          <button class="btn-danger-sm" (click)="removerEntrada(escala.id, e.id)">✕</button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              } @else {
+                <p class="empty">Nenhuma entrada. Adicione acima.</p>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      @if (!loading && escalas.length === 0) {
+        <div class="empty-state">Nenhuma escala criada.</div>
+      }
+    </div>
+  `,
+  styles: [`
+    .page { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .page-header h2 { margin: 0; font-size: 1.5rem; color: #1e293b; }
+    .form-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .form-card h3 { margin: 0 0 0.75rem; font-size: 1rem; color: #334155; }
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .input {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      min-width: 0;
+      flex: 1;
+      background: #fff;
+    }
+    .input.select { flex: 0 0 auto; min-width: 100px; }
+    .input.input-sm { flex: 0 0 100px; }
+    .input.input-xs { flex: 0 0 70px; }
+    .btn-primary {
+      padding: 0.5rem 1rem;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-danger-sm {
+      padding: 0.25rem 0.625rem;
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .loading, .empty-state {
+      text-align: center;
+      color: #94a3b8;
+      padding: 2rem;
+    }
+    .erro { color: #dc2626; font-size: 0.8rem; margin-top: 0.5rem; }
+    .escala-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .escala-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      background: #f8fafc;
+    }
+    .escala-header:hover { background: #f1f5f9; }
+    .escala-nome { font-weight: 600; color: #1e293b; }
+    .escala-datas { color: #64748b; font-size: 0.875rem; }
+    .header-actions { display: flex; align-items: center; gap: 0.75rem; }
+    .count { color: #94a3b8; font-size: 0.8rem; }
+    .chevron { color: #94a3b8; font-size: 0.75rem; }
+    .escala-body { padding: 1.25rem; border-top: 1px solid #e2e8f0; }
+    .add-entrada-form { margin-bottom: 1.25rem; }
+    .add-entrada-form h4 { margin: 0 0 0.75rem; font-size: 0.875rem; color: #475569; font-weight: 600; }
+    .check-label { display: flex; align-items: center; gap: 0.375rem; font-size: 0.875rem; color: #475569; white-space: nowrap; }
+    .tabela { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .tabela th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      background: #f8fafc;
+      color: #64748b;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .tabela td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    .tabela tr:last-child td { border-bottom: none; }
+    .tabela td.destaque { font-weight: 600; color: #1d4ed8; }
+    .nowrap { white-space: nowrap; }
+    .empty { color: #94a3b8; font-size: 0.875rem; margin: 0; padding: 0.5rem 0; }
+  `],
+})
+export class GerenciarEscalasComponent implements OnInit {
+  escalas: EscalaEventoDto[] = [];
+  loading = true;
+  salvando = false;
+  adicionando = false;
+  expandido: number | null = null;
+  mostrarFormNovo = false;
+  erroGlobal = '';
+  erroEntrada = '';
+  DIAS = DIAS;
+
+  novaEscala = { nome: '', dataInicio: '', dataFim: '' };
+  novaEntrada = this.entradaVazia();
+
+  private apiUrl = `${environment.apiUrl}/escalas`;
+
+  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
+
+  async ngOnInit() {
+    await this.carregarEscalas();
+  }
+
+  async carregarEscalas() {
+    this.loading = true;
+    try {
+      this.escalas = await firstValueFrom(this.http.get<EscalaEventoDto[]>(this.apiUrl));
+    } catch {
+      this.erroGlobal = 'Erro ao carregar escalas.';
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  toggleExpand(id: number) {
+    this.expandido = this.expandido === id ? null : id;
+    this.novaEntrada = this.entradaVazia();
+    this.erroEntrada = '';
+    this.cdr.detectChanges();
+  }
+
+  async criarEscala() {
+    if (!this.novaEscala.nome.trim()) return;
+    this.salvando = true;
+    this.erroGlobal = '';
+    try {
+      const criada = await firstValueFrom(
+        this.http.post<EscalaEventoDto>(this.apiUrl, {
+          nome: this.novaEscala.nome,
+          dataInicio: this.novaEscala.dataInicio || null,
+          dataFim: this.novaEscala.dataFim || null,
+        })
+      );
+      this.escalas = [criada, ...this.escalas];
+      this.novaEscala = { nome: '', dataInicio: '', dataFim: '' };
+      this.mostrarFormNovo = false;
+      this.expandido = criada.id;
+    } catch {
+      this.erroGlobal = 'Erro ao criar escala.';
+    } finally {
+      this.salvando = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  async excluirEscala(id: number, event: Event) {
+    event.stopPropagation();
+    if (!confirm('Excluir esta escala e todas as suas entradas?')) return;
+    try {
+      await firstValueFrom(this.http.delete(`${this.apiUrl}/${id}`));
+      this.escalas = this.escalas.filter(e => e.id !== id);
+      if (this.expandido === id) this.expandido = null;
+    } catch {
+      alert('Erro ao excluir escala.');
+    }
+    this.cdr.detectChanges();
+  }
+
+  async adicionarEntrada(escalaId: number) {
+    if (!this.novaEntrada.dia || !this.novaEntrada.nomeConselheiro.trim()) return;
+    this.adicionando = true;
+    this.erroEntrada = '';
+    try {
+      const entrada = await firstValueFrom(
+        this.http.post<EscalaEntradaDto>(`${this.apiUrl}/${escalaId}/entradas`, {
+          dia: this.novaEntrada.dia,
+          horarioInicio: this.novaEntrada.horarioInicio,
+          horarioFim: this.novaEntrada.horarioFim,
+          atividade: this.novaEntrada.atividade,
+          nomeConselheiro: this.novaEntrada.nomeConselheiro,
+          capacidadeMaxima: this.novaEntrada.capacidadeMaxima || null,
+          destaque: this.novaEntrada.destaque,
+        })
+      );
+      const escala = this.escalas.find(e => e.id === escalaId);
+      if (escala) escala.entradas = [...escala.entradas, entrada];
+      this.novaEntrada = this.entradaVazia();
+    } catch {
+      this.erroEntrada = 'Erro ao adicionar entrada.';
+    } finally {
+      this.adicionando = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  async removerEntrada(escalaId: number, entradaId: number) {
+    try {
+      await firstValueFrom(this.http.delete(`${this.apiUrl}/${escalaId}/entradas/${entradaId}`));
+      const escala = this.escalas.find(e => e.id === escalaId);
+      if (escala) escala.entradas = escala.entradas.filter(e => e.id !== entradaId);
+    } catch {
+      alert('Erro ao remover entrada.');
+    }
+    this.cdr.detectChanges();
+  }
+
+  private entradaVazia() {
+    return {
+      dia: '',
+      horarioInicio: '',
+      horarioFim: '',
+      atividade: '',
+      nomeConselheiro: '',
+      capacidadeMaxima: null as number | null,
+      destaque: false,
+    };
+  }
+}
