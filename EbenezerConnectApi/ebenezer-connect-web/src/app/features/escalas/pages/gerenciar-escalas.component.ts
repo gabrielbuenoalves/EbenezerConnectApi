@@ -554,6 +554,10 @@ export class GerenciarEscalasComponent implements OnInit {
       }
     }
 
+    if (error?.message && typeof error.message === 'string' && error.message.trim()) {
+      return error.message;
+    }
+
     return mensagemPadrao;
   }
 
