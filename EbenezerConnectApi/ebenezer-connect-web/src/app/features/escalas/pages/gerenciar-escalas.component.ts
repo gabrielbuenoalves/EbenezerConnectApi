@@ -409,7 +409,7 @@ export class GerenciarEscalasComponent implements OnInit {
     return mensagemPadrao;
   }
 
-  private formularioEscalaValido() {
+  formularioEscalaValido() {
     return !!this.novaEscala.nome.trim() && !!this.novaEscala.dataInicio && !!this.novaEscala.dataFim;
   }
 }

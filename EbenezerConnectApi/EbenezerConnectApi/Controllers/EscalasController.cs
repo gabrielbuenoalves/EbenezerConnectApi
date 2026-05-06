@@ -63,6 +63,16 @@ namespace EbenezerConnectApi.Controllers
             }
 
             var escala = _mapper.Map<EscalaEvento>(dto);
+            if (escala.DataInicio.HasValue)
+            {
+                escala.DataInicio = DateTime.SpecifyKind(escala.DataInicio.Value, DateTimeKind.Unspecified);
+            }
+
+            if (escala.DataFim.HasValue)
+            {
+                escala.DataFim = DateTime.SpecifyKind(escala.DataFim.Value, DateTimeKind.Unspecified);
+            }
+
             escala.CriadoEm = DateTime.UtcNow;
             _context.EscalaEvento.Add(escala);
             await _context.SaveChangesAsync();
