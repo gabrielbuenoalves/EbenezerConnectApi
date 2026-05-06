@@ -75,8 +75,20 @@ namespace EbenezerConnectApi.Controllers
 
             escala.CriadoEm = DateTime.UtcNow;
             _context.EscalaEvento.Add(escala);
-            await _context.SaveChangesAsync();
-            return Ok(_mapper.Map<EscalaEventoResponseDto>(escala));
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(_mapper.Map<EscalaEventoResponseDto>(escala));
+            }
+            catch (DbUpdateException ex)
+            {
+                var detalhes = ex.InnerException?.Message ?? ex.Message;
+                return StatusCode(500, new { erro = $"Erro ao criar escala: {detalhes}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { erro = $"Erro ao criar escala: {ex.Message}" });
+            }
         }
 
         [Authorize(Roles = "admin")]
