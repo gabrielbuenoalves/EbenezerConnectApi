@@ -17,10 +17,10 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
+          port: ${{ secrets.SSH_PORT }}
           script: |
             set -e
-            cd /home/ubuntu/EbenezerConnectApi
+            cd /home/ubuntu/EbenezerConnectApi/EbenezerConnectApi
 
             echo "==> Pulling latest changes..."
             git pull origin main
