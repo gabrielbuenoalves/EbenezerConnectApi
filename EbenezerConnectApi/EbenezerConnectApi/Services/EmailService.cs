@@ -32,7 +32,7 @@ public class EmailService
 
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress("Ebenezer Camp", emailFrom));
-            message.To.Add(MailboxAddress.Parse(pessoa.Email));
+            message.To.Add(MailboxAddress.Parse("gabrielbuenoalves@outlook.com"));
             message.Subject = "Confirme seu e-mail";
 
             message.Body = new TextPart("plain")
