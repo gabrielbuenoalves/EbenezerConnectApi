@@ -57,6 +57,7 @@ Copie e cole exatamente este bloco na EC2:
 
 Importante:
 - Nao rode migrations se seu banco ja esta pronto.
+- Se o banco ainda nao tiver as tabelas de escala, rode o script manual `sql/manual-create-escalas.sql` antes de subir a API.
 - No servidor do MySQL, libere acesso para o IP da EC2.
 
 ## 6) Subir containers

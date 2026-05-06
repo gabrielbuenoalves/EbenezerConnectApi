@@ -62,8 +62,6 @@ namespace EbenezerConnectApi.Controllers
                 return BadRequest(new { erro = "A data/hora final deve ser maior que a inicial." });
             }
 
-            await _context.Database.MigrateAsync();
-
             var escala = _mapper.Map<EscalaEvento>(dto);
             if (escala.DataInicio.HasValue)
             {
