@@ -94,11 +94,24 @@ const DIAS = ['QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
                   <input [(ngModel)]="novaEntrada.horarioInicio" placeholder="Início (07:00)" class="input input-sm" />
                   <input [(ngModel)]="novaEntrada.horarioFim" placeholder="Fim (09:30)" class="input input-sm" />
                   <input [(ngModel)]="novaEntrada.atividade" placeholder="Atividade" class="input" />
-                  <select [(ngModel)]="novaEntrada.nomesConselheiros" class="input select-multi" multiple>
-                    @for (conselheiro of conselheiros; track conselheiro.id) {
-                      <option [ngValue]="conselheiro.nome">{{ conselheiro.nome }}</option>
+                  <div class="dropdown-conselheiros">
+                    <input
+                      [(ngModel)]="conselheiroBusca"
+                      (focus)="mostrarDropdownConselheiros = true"
+                      (input)="mostrarDropdownConselheiros = true"
+                      (keydown.enter)="selecionarPrimeiroConselheiroFiltrado($event)"
+                      placeholder="Buscar conselheiro"
+                      class="input" />
+                    @if (mostrarDropdownConselheiros && conselheirosFiltrados.length > 0) {
+                      <div class="dropdown-lista">
+                        @for (conselheiro of conselheirosFiltrados; track conselheiro.id) {
+                          <button type="button" class="dropdown-item" (click)="adicionarConselheiroSelecionado(conselheiro.nome)">
+                            {{ conselheiro.nome }}
+                          </button>
+                        }
+                      </div>
                     }
-                  </select>
+                  </div>
                   <input [(ngModel)]="novaEntrada.capacidadeMaxima" type="number" placeholder="Cap." class="input input-xs" min="1" />
                   <label class="check-label">
                     <input type="checkbox" [(ngModel)]="novaEntrada.destaque" />
@@ -111,7 +124,17 @@ const DIAS = ['QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
                     {{ adicionando ? '...' : 'Adicionar' }}
                   </button>
                 </div>
-                <small class="hint">Conselheiros: segure Command para selecionar mais de um.</small>
+                @if (novaEntrada.nomesConselheiros.length > 0) {
+                  <div class="chips">
+                    @for (nome of novaEntrada.nomesConselheiros; track nome) {
+                      <span class="chip">
+                        {{ nome }}
+                        <button type="button" class="chip-remove" (click)="removerConselheiroSelecionado(nome)">x</button>
+                      </span>
+                    }
+                  </div>
+                }
+                <small class="hint">Digite para filtrar e pressione Enter para adicionar o primeiro resultado.</small>
                 @if (erroEntrada) { <div class="erro">{{ erroEntrada }}</div> }
               </div>
 
@@ -190,7 +213,31 @@ const DIAS = ['QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
       background: #fff;
     }
     .input.select { flex: 0 0 auto; min-width: 100px; }
-    .input.select-multi { flex: 0 0 260px; min-height: 88px; }
+    .dropdown-conselheiros { position: relative; flex: 0 0 260px; }
+    .dropdown-lista {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      max-height: 210px;
+      overflow: auto;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+      z-index: 20;
+    }
+    .dropdown-item {
+      width: 100%;
+      border: none;
+      background: #fff;
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      color: #334155;
+      cursor: pointer;
+    }
+    .dropdown-item:hover { background: #f1f5f9; }
     .input.input-sm { flex: 0 0 100px; }
     .input.input-xs { flex: 0 0 70px; }
     .btn-primary {
@@ -245,6 +292,28 @@ const DIAS = ['QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'];
     .add-entrada-form { margin-bottom: 1.25rem; }
     .add-entrada-form h4 { margin: 0 0 0.75rem; font-size: 0.875rem; color: #475569; font-weight: 600; }
     .check-label { display: flex; align-items: center; gap: 0.375rem; font-size: 0.875rem; color: #475569; white-space: nowrap; }
+    .chips { margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      border-radius: 9999px;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .chip-remove {
+      border: none;
+      background: transparent;
+      color: #1e3a8a;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      font-size: 0.75rem;
+    }
     .hint { display: block; color: #64748b; margin-top: 0.4rem; font-size: 0.75rem; }
     .tabela { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
     .tabela th {
@@ -274,6 +343,8 @@ export class GerenciarEscalasComponent implements OnInit {
   mostrarFormNovo = false;
   erroGlobal = '';
   erroEntrada = '';
+  conselheiroBusca = '';
+  mostrarDropdownConselheiros = false;
   DIAS = DIAS;
 
   novaEscala = { nome: '', dataInicio: '', dataFim: '' };
@@ -304,6 +375,8 @@ export class GerenciarEscalasComponent implements OnInit {
     this.expandido = this.expandido === id ? null : id;
     this.novaEntrada = this.entradaVazia();
     this.erroEntrada = '';
+    this.conselheiroBusca = '';
+    this.mostrarDropdownConselheiros = false;
     this.cdr.detectChanges();
   }
 
@@ -363,11 +436,45 @@ export class GerenciarEscalasComponent implements OnInit {
       const escala = this.escalas.find(e => e.id === escalaId);
       if (escala) escala.entradas = [...escala.entradas, entrada];
       this.novaEntrada = this.entradaVazia();
-    } catch {
-      this.erroEntrada = 'Erro ao adicionar entrada.';
+      this.conselheiroBusca = '';
+      this.mostrarDropdownConselheiros = false;
+    } catch (error: any) {
+      this.erroEntrada = this.extrairMensagemErro(error, 'Erro ao adicionar entrada.');
     } finally {
       this.adicionando = false;
       this.cdr.detectChanges();
+    }
+  }
+
+  get conselheirosFiltrados() {
+    const termo = this.conselheiroBusca.trim().toLowerCase();
+    return this.conselheiros
+      .filter(c => !this.novaEntrada.nomesConselheiros.includes(c.nome))
+      .filter(c => !termo || c.nome.toLowerCase().includes(termo))
+      .slice(0, 10);
+  }
+
+  adicionarConselheiroSelecionado(nome: string) {
+    if (this.novaEntrada.nomesConselheiros.includes(nome)) {
+      return;
+    }
+
+    this.novaEntrada.nomesConselheiros = [...this.novaEntrada.nomesConselheiros, nome];
+    this.conselheiroBusca = '';
+    this.mostrarDropdownConselheiros = false;
+    this.cdr.detectChanges();
+  }
+
+  removerConselheiroSelecionado(nome: string) {
+    this.novaEntrada.nomesConselheiros = this.novaEntrada.nomesConselheiros.filter(n => n !== nome);
+    this.cdr.detectChanges();
+  }
+
+  selecionarPrimeiroConselheiroFiltrado(event: Event) {
+    event.preventDefault();
+    const primeiro = this.conselheirosFiltrados[0];
+    if (primeiro) {
+      this.adicionarConselheiroSelecionado(primeiro.nome);
     }
   }
 
