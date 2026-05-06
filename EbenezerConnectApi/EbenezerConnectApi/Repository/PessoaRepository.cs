@@ -78,6 +78,14 @@ namespace EbenezerConnectApi.Repository
                 .FirstOrDefaultAsync(p => p.Id == id && p.Cpf == cpf);
         }
 
+        public async Task<List<Pessoa>> BuscarPorNome(string nome)
+        {
+            return await _context.Pessoa
+                .Include(p => p.Quarto)
+                .Where(p => p.Nome.ToLower().Contains(nome.ToLower()))
+                .ToListAsync();
+        }
+
         public async Task AdicionarCredito(int id, decimal valor)
         {
             var pessoa = await _context.Pessoa.FindAsync(id);
