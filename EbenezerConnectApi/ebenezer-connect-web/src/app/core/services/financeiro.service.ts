@@ -19,4 +19,8 @@ export class FinanceiroService {
   reverter(dto: ReverterFinanceiroDto): Observable<any> {
     return this.http.post(`${this.apiUrl}/reverter`, dto);
   }
+
+  desfazerEstorno(id: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/desfazer-estorno`, { id, tipo: 'saldo' });
+  }
 }

@@ -64,6 +64,21 @@
   font-size: 0.75rem;
 }
 
+.btn-desfazer {
+  background: #ff9800;
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.btn-desfazer:hover {
+  background: #f57c00;
+}
+
 .btn-danger {
   background: #e53935;
   color: #fff;

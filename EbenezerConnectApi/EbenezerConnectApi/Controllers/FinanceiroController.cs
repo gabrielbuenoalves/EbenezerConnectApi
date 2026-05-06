@@ -161,5 +161,31 @@ namespace EbenezerConnectApi.Controllers
                 return StatusCode(500, new { erro = "Erro ao reverter: " + ex.Message });
             }
         }
+
+        [Authorize]
+        [HttpPost("desfazer-estorno")]
+        public async Task<IActionResult> DesfazerEstorno([FromBody] ReverterFinanceiroDto dto)
+        {
+            var credito = await _context.AdicaoSaldo
+                .Include(c => c.Pessoa)
+                .FirstOrDefaultAsync(c => c.Id == dto.Id);
+
+            if (credito == null)
+                return NotFound(new { erro = "Adicao de saldo nao encontrada." });
+
+            if (!credito.Revertida)
+                return BadRequest(new { erro = "Este credito nao esta revertido." });
+
+            credito.Pessoa.Saldo += (double)credito.Valor;
+            _context.Pessoa.Update(credito.Pessoa);
+
+            credito.Revertida = false;
+            credito.DataReversao = null;
+            _context.AdicaoSaldo.Update(credito);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { mensagem = "Estorno desfeito com sucesso." });
+        }
     }
 }

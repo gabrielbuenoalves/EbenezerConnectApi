@@ -61,7 +61,7 @@ import * as XLSX from 'xlsx';
             <td>{{ item.pessoaNome }}</td>
             <td class="tipo">{{ item.tipo === 'cantina' ? 'Cantina' : 'Saldo' }}</td>
             <td>R$ {{ item.valor.toFixed(2) }}</td>
-            <td>{{ formatarPagamento(item.pagamento) }}</td>
+            <td>{{ item.revertida && item.tipo === 'saldo' ? 'Estorno' : formatarPagamento(item.pagamento) }}</td>
             <td class="itens">
               <span *ngIf="!item.itens || item.itens.length === 0">-</span>
               <span *ngIf="item.itens && item.itens.length > 0">
@@ -69,7 +69,16 @@ import * as XLSX from 'xlsx';
               </span>
             </td>
             <td class="acoes">
-              <span *ngIf="item.revertida" class="badge">Revertida</span>
+              <ng-container *ngIf="item.revertida">
+                <span *ngIf="item.tipo !== 'saldo'" class="badge">Revertida</span>
+                <button
+                  *ngIf="item.tipo === 'saldo'"
+                  class="btn-desfazer"
+                  (click)="desfazerEstorno(item)"
+                >
+                  Desfazer Estorno
+                </button>
+              </ng-container>
               <button
                 *ngIf="!item.revertida"
                 class="btn-danger"
@@ -196,6 +205,17 @@ export class ControleFinanceiroComponent implements OnInit {
         console.error('Erro ao reverter:', err);
         alert('Erro ao reverter a operacao.');
       }
+    });
+  }
+
+  desfazerEstorno(item: FinanceiroHistorico): void {
+    if (!confirm(`Desfazer estorno de R$ ${item.valor.toFixed(2)} para ${item.pessoaNome}?`)) return;
+    this.financeiroService.desfazerEstorno(item.id).subscribe({
+      next: () => {
+        alert('Estorno desfeito com sucesso!');
+        this.carregarHistorico();
+      },
+      error: (err) => alert(err.error?.erro || 'Erro ao desfazer estorno')
     });
   }
 
