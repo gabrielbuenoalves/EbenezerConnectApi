@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { PessoaService } from '../../../core/services/pessoa.service';
-import { Pessoa } from '../../../core/models';
+import { FinanceiroService } from '../../../core/services/financeiro.service';
+import { Pessoa, FinanceiroHistorico } from '../../../core/models';
 import { PageHeaderComponent } from '../../../shared/components/page-header.component';
 
 interface ResumoAdicaoSaldo {
@@ -61,6 +62,24 @@ interface ResumoAdicaoSaldo {
           </div>
           <div *ngIf="pessoasFiltradas.length === 0" class="empty-list">
             Nenhuma pessoa encontrada
+          </div>
+        </div>
+      </div>
+
+      <div class="card estorno-card" *ngIf="pessoaSelecionada">
+        <h3>Estorno de Crédito</h3>
+
+        <div *ngIf="creditosDaPessoa.length === 0" class="empty-list">
+          Nenhum crédito ativo para estorno
+        </div>
+
+        <div class="creditos-list" *ngIf="creditosDaPessoa.length > 0">
+          <div class="credito-item" *ngFor="let c of creditosDaPessoa">
+            <div class="credito-info">
+              <span class="credito-valor">+ R$ {{ c.valor.toFixed(2) }}</span>
+              <span class="credito-data">{{ formatarData(c.data) }}</span>
+            </div>
+            <button class="btn-estorno" (click)="abrirModalEstorno(c)">Estornar</button>
           </div>
         </div>
       </div>
@@ -139,6 +158,32 @@ interface ResumoAdicaoSaldo {
           <button (click)="cancelarAdicao()" class="btn-secondary">Cancelar</button>
           <button (click)="confirmarAdicao()" class="btn-primary" [disabled]="processandoAdicao">
             {{ processandoAdicao ? 'Processando...' : 'Confirmar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" *ngIf="modalEstornoAberta && creditoParaEstornar">
+      <div class="modal-content">
+        <h2>Confirmar Estorno</h2>
+        <div class="resumo">
+          <div class="resumo-item">
+            <span class="label">Pessoa:</span>
+            <span class="valor">{{ creditoParaEstornar!.pessoaNome }}</span>
+          </div>
+          <div class="resumo-item destaque">
+            <span class="label">Valor a estornar:</span>
+            <span class="valor negativo">- R$ {{ creditoParaEstornar!.valor.toFixed(2) }}</span>
+          </div>
+          <div class="resumo-item">
+            <span class="label">Data do crédito:</span>
+            <span class="valor">{{ formatarData(creditoParaEstornar!.data) }}</span>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button (click)="modalEstornoAberta = false" class="btn-secondary">Cancelar</button>
+          <button (click)="confirmarEstorno()" class="btn-danger-modal" [disabled]="processandoEstorno">
+            {{ processandoEstorno ? 'Processando...' : 'Confirmar Estorno' }}
           </button>
         </div>
       </div>
@@ -485,6 +530,77 @@ interface ResumoAdicaoSaldo {
       width: auto;
     }
 
+    .estorno-card {
+      width: 320px;
+    }
+
+    .creditos-list {
+      padding: 0.5rem 0;
+    }
+
+    .credito-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1.5rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .credito-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .credito-valor {
+      font-weight: 600;
+      color: #4CAF50;
+      font-size: 0.95rem;
+    }
+
+    .credito-data {
+      font-size: 0.78rem;
+      color: #999;
+    }
+
+    .btn-estorno {
+      padding: 0.35rem 0.75rem;
+      background: #fff3e0;
+      color: #e65100;
+      border: 1px solid #ffb74d;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .btn-estorno:hover {
+      background: #ffe0b2;
+    }
+
+    .btn-danger-modal {
+      flex: 1;
+      padding: 0.5rem;
+      background: #f44336;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .btn-danger-modal:hover:not(:disabled) {
+      background: #d32f2f;
+    }
+
+    .btn-danger-modal:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
     @media (max-width: 768px) {
       .adicionar-saldo-container {
         grid-template-columns: 1fr;
@@ -503,8 +619,14 @@ export class AdicionarSaldoComponent implements OnInit {
   resumoAdicao: ResumoAdicaoSaldo | null = null;
   processandoAdicao: boolean = false;
 
+  creditosDaPessoa: FinanceiroHistorico[] = [];
+  creditoParaEstornar: FinanceiroHistorico | null = null;
+  modalEstornoAberta: boolean = false;
+  processandoEstorno: boolean = false;
+
   constructor(
     private pessoaService: PessoaService,
+    private financeiroService: FinanceiroService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -534,6 +656,49 @@ export class AdicionarSaldoComponent implements OnInit {
   selecionarPessoa(pessoa: Pessoa): void {
     this.pessoaSelecionada = pessoa;
     this.valorAdicionar = 0;
+    this.carregarCreditosDaPessoa(pessoa.id);
+  }
+
+  carregarCreditosDaPessoa(pessoaId: number): void {
+    this.financeiroService.getHistorico().subscribe({
+      next: (historico) => {
+        this.creditosDaPessoa = historico.filter(
+          h => h.tipo === 'saldo' && h.pessoaId === pessoaId && !h.revertida
+        );
+        this.cdr.detectChanges();
+      },
+      error: () => { this.creditosDaPessoa = []; }
+    });
+  }
+
+  abrirModalEstorno(credito: FinanceiroHistorico): void {
+    this.creditoParaEstornar = credito;
+    this.modalEstornoAberta = true;
+  }
+
+  confirmarEstorno(): void {
+    if (!this.creditoParaEstornar) return;
+    this.processandoEstorno = true;
+
+    this.financeiroService.reverter({ id: this.creditoParaEstornar.id, tipo: 'saldo' }).subscribe({
+      next: () => {
+        alert(`Estorno de R$ ${this.creditoParaEstornar!.valor.toFixed(2)} realizado com sucesso!`);
+        this.modalEstornoAberta = false;
+        this.creditoParaEstornar = null;
+        this.processandoEstorno = false;
+        this.loadPessoas();
+        if (this.pessoaSelecionada) this.carregarCreditosDaPessoa(this.pessoaSelecionada.id);
+      },
+      error: (err) => {
+        this.processandoEstorno = false;
+        const msg = err.error?.erro || err.message || 'Erro ao realizar estorno';
+        alert(msg);
+      }
+    });
+  }
+
+  formatarData(data: string): string {
+    return new Date(data).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
   }
 
   getFuncaoLabel(funcao: string): string {
