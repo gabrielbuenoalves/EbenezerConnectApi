@@ -18,6 +18,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
+          command_timeout: 30m
           script: |
             set -e
             cd /home/ubuntu/EbenezerConnectApi/EbenezerConnectApi
@@ -28,9 +29,21 @@ jobs:
             echo "==> Freeing space before the image build..."
             docker builder prune -af
             docker image prune -f
+            df -h /
 
-            echo "==> Rebuilding and restarting containers..."
-            docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+            echo "==> Building API..."
+            docker compose -f docker-compose.prod.yml --env-file .env build api
+            docker builder prune -af
+            docker image prune -f
+            df -h /
+
+            echo "==> Building web..."
+            docker compose -f docker-compose.prod.yml --env-file .env build web
+            docker builder prune -af
+            df -h /
+
+            echo "==> Restarting containers..."
+            docker compose -f docker-compose.prod.yml --env-file .env up -d
 
             echo "==> Removing unused images..."
             docker image prune -f
