@@ -25,6 +25,10 @@ jobs:
             echo "==> Pulling latest changes..."
             git pull origin main
 
+            echo "==> Freeing space before the image build..."
+            docker builder prune -af
+            docker image prune -f
+
             echo "==> Rebuilding and restarting containers..."
             docker compose -f docker-compose.prod.yml --env-file .env up -d --build
 
