@@ -28,24 +28,7 @@ public class EmailService
 
             _logger.LogInformation("📧 Iniciando envio de email de confirmação para {Email}", pessoa.Email);
 
-            var link = $"{baseUrl}/api/auth/confirmar-email?token={token}";
-
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Ebenezer Camp", emailFrom));
-            message.To.Add(MailboxAddress.Parse("gabrielbuenoalves@outlook.com"));
-            message.Subject = "Confirme seu e-mail";
-
-            message.Body = new TextPart("plain")
-            {
-                Text = $@"Olá {pessoa.Nome},
-
-Clique no link abaixo para confirmar seu e-mail:
-{link}
-
-Caso não tenha se cadastrado, ignore este e-mail.
-
-Equipe Ebenezer Camp"
-            };
+            var message = MontarConfirmacao(pessoa, token, baseUrl, emailFrom);
 
             using var client = new SmtpClient();
             _logger.LogInformation("📡 Conectando ao SMTP...");
@@ -66,5 +49,26 @@ Equipe Ebenezer Camp"
             Console.WriteLine($"❌ Erro ao enviar email: {ex.Message}");
             throw; // Relança a exceção para o controlador capturar
         }
+    }
+
+    public static MimeMessage MontarConfirmacao(Pessoa pessoa, string token, string baseUrl, string emailFrom)
+    {
+        var link = $"{baseUrl}/api/auth/confirmar-email?token={token}";
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress("Ebenezer Camp", emailFrom));
+        message.To.Add(MailboxAddress.Parse(pessoa.Email));
+        message.Subject = "Confirme seu e-mail";
+        message.Body = new TextPart("plain")
+        {
+            Text = $@"Olá {pessoa.Nome},
+
+Clique no link abaixo para confirmar seu e-mail:
+{link}
+
+Caso não tenha se cadastrado, ignore este e-mail.
+
+Equipe Ebenezer Camp"
+        };
+        return message;
     }
 }

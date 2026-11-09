@@ -289,12 +289,18 @@ namespace EbenezerConnectApi.Services
 
         private static string GerarSenhaTemporaria(string cpf)
         {
-            if (!string.IsNullOrWhiteSpace(cpf) && cpf.Length >= 6)
-            {
-                return cpf.Substring(0, 6);
-            }
+            var prefixoCpf = !string.IsNullOrWhiteSpace(cpf) && cpf.Length >= 6
+                ? cpf.Substring(0, 6)
+                : string.Empty;
 
-            return Random.Shared.Next(100000, 999999).ToString();
+            string senha;
+            do
+            {
+                senha = Random.Shared.Next(100000, 999999).ToString();
+            }
+            while (senha == prefixoCpf);
+
+            return senha;
         }
 
         private async Task<string> GerarCpfTecnicoUnico()

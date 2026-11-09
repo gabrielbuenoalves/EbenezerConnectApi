@@ -183,7 +183,10 @@ namespace EbenezerConnectApi.Controllers
             };
 
             credito.Pessoa.Saldo -= (double)credito.Valor;
+            credito.Revertida = true;
+            credito.DataReversao = DateTimeHelper.NowBrasilia();
             _context.Pessoa.Update(credito.Pessoa);
+            _context.AdicaoSaldo.Update(credito);
             _context.AdicaoSaldo.Add(estorno);
 
             await _context.SaveChangesAsync();

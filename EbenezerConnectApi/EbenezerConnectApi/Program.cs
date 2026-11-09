@@ -13,11 +13,7 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using BCrypt.Net;
 using Microsoft.AspNetCore.HttpOverrides;
 
-var builder = WebApplication.CreateBuilder(new WebApplicationOptions
-{
-    Args = args,
-    EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"
-});
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()
     .AddJsonOptions(x =>
@@ -145,6 +141,13 @@ var enableHttpsRedirection = builder.Configuration.GetValue<bool>("AppSettings:E
 // Middleware global para capturar erros não tratados
 app.Use(async (context, next) =>
 {
+    if (!app.Environment.IsDevelopment()
+        && context.Request.Path.StartsWithSegments("/api/Auth/dev", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
     try
     {
         await next.Invoke();
@@ -181,3 +184,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
+
+public partial class Program { }

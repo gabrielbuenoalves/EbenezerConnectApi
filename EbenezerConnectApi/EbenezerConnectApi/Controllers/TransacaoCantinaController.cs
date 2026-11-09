@@ -1,6 +1,7 @@
 ﻿using EbenezerConnectApi.Models.Dtos;
 using EbenezerConnectApi.Models.Entities;
 using EbenezerConnectApi.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EbenezerConnectApi.Controllers
@@ -16,6 +17,7 @@ namespace EbenezerConnectApi.Controllers
             _service = service;
         }
 
+    [Authorize]
     [HttpPost("registrar")]
     public async Task<IActionResult> RegistrarTransacao([FromBody] RegistrarTransacaoDto dto)
     {

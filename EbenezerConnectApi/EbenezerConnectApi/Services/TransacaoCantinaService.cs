@@ -46,26 +46,6 @@ namespace EbenezerConnectApi.Services
                     .Select(g => new { ProdutoId = g.Key, Quantidade = g.Sum(x => x.Quantidade) })
                     .ToList();
 
-                // Reserva de estoque atômica por produto: evita lost update em concorrência.
-                foreach (var grupo in quantidadesPorProduto)
-                {
-                    if (!produtos.TryGetValue(grupo.ProdutoId, out var produto))
-                        return (false, $"Produto com ID {grupo.ProdutoId} não encontrado.");
-
-                    var linhasAfetadas = await _context.Database.ExecuteSqlInterpolatedAsync(
-                        $"UPDATE Produto SET QuantidadeEmEstoque = QuantidadeEmEstoque - {grupo.Quantidade} WHERE Id = {grupo.ProdutoId} AND QuantidadeEmEstoque >= {grupo.Quantidade}");
-
-                    if (linhasAfetadas == 0)
-                    {
-                        var estoqueAtual = await _context.Produto
-                            .Where(p => p.Id == grupo.ProdutoId)
-                            .Select(p => p.QuantidadeEmEstoque)
-                            .FirstOrDefaultAsync();
-
-                        return (false, $"Estoque insuficiente para {produto.Nome}. Disponível: {estoqueAtual}");
-                    }
-                }
-
                 foreach (var itemDto in dto.Itens)
                 {
                     if (!produtos.TryGetValue(itemDto.ProdutoId, out var produto))
@@ -85,29 +65,32 @@ namespace EbenezerConnectApi.Services
                     });
                 }
 
-                // Processa pagamento
-                switch (dto.TipoPagamento.ToLower())
-                {
-                    case "saldo":
-                        var saldoAtualizado = await _context.Database.ExecuteSqlInterpolatedAsync(
-                            $"UPDATE Pessoa SET Saldo = Saldo - {total} WHERE Id = {dto.PessoaId}");
+                var tipoPagamento = dto.TipoPagamento.ToLower();
+                if (tipoPagamento != "saldo" && tipoPagamento != "avista")
+                    return (false, "Tipo de pagamento inválido.");
 
-                        if (saldoAtualizado == 0)
-                            return (false, "Pessoa não encontrada.");
-                        break;
-                    case "avista":
-                        // saldo não é alterado
-                        break;
-                    default:
-                        return (false, "Tipo de pagamento inválido.");
+                if (tipoPagamento == "saldo" && pessoa.Saldo < total)
+                    return (false, "Saldo insuficiente.");
+
+                foreach (var grupo in quantidadesPorProduto)
+                {
+                    if (!produtos.TryGetValue(grupo.ProdutoId, out var produto))
+                        return (false, $"Produto com ID {grupo.ProdutoId} não encontrado.");
+
+                    var (estoqueOk, erroEstoque) = await BaixarEstoqueAsync(grupo.ProdutoId, grupo.Quantidade, produto.Nome);
+                    if (!estoqueOk)
+                        return (false, erroEstoque!);
                 }
+
+                if (tipoPagamento == "saldo" && !await DebitarSaldoAsync(dto.PessoaId, total))
+                    return (false, "Saldo insuficiente.");
 
                 var transacao = new TransacaoCantina
                 {
                     PessoaId = dto.PessoaId,
                     DataTransacao = DateTimeHelper.NowBrasilia(),
                     Valor = total,
-                    Tipo = dto.TipoPagamento,
+                    Tipo = tipoPagamento,
                     Itens = itensTransacao
                 };
 
@@ -133,6 +116,55 @@ namespace EbenezerConnectApi.Services
                 await transaction.RollbackAsync();
                 return (false, $"Erro ao processar transação: {ex.Message}");
             }
+        }
+
+        private bool UsaAtualizacaoAtomicaMySql()
+        {
+            return _context.Database.ProviderName?.Contains("MySql", StringComparison.OrdinalIgnoreCase) == true;
+        }
+
+        private async Task<(bool ok, string? erro)> BaixarEstoqueAsync(int produtoId, int quantidade, string nomeProduto)
+        {
+            if (UsaAtualizacaoAtomicaMySql())
+            {
+                var linhasAfetadas = await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"UPDATE Produto SET QuantidadeEmEstoque = QuantidadeEmEstoque - {quantidade} WHERE Id = {produtoId} AND QuantidadeEmEstoque >= {quantidade}");
+
+                if (linhasAfetadas > 0)
+                    return (true, null);
+
+                var estoqueAtual = await _context.Produto
+                    .Where(p => p.Id == produtoId)
+                    .Select(p => p.QuantidadeEmEstoque)
+                    .FirstOrDefaultAsync();
+
+                return (false, $"Estoque insuficiente para {nomeProduto}. Disponível: {estoqueAtual}");
+            }
+
+            var produto = await _context.Produto.FirstAsync(p => p.Id == produtoId);
+            if (produto.QuantidadeEmEstoque < quantidade)
+                return (false, $"Estoque insuficiente para {nomeProduto}. Disponível: {produto.QuantidadeEmEstoque}");
+
+            produto.QuantidadeEmEstoque -= quantidade;
+            return (true, null);
+        }
+
+        private async Task<bool> DebitarSaldoAsync(int pessoaId, double total)
+        {
+            if (UsaAtualizacaoAtomicaMySql())
+            {
+                var linhasAfetadas = await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"UPDATE Pessoa SET Saldo = Saldo - {total} WHERE Id = {pessoaId} AND Saldo >= {total}");
+
+                return linhasAfetadas > 0;
+            }
+
+            var pessoa = await _context.Pessoa.FirstAsync(p => p.Id == pessoaId);
+            if (pessoa.Saldo < total)
+                return false;
+
+            pessoa.Saldo -= total;
+            return true;
         }
     }
 }

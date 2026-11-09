@@ -35,8 +35,8 @@ namespace EbenezerConnectApi.Controllers
             return produto == null ? NotFound() : Ok(produto);
         }
 
+        [Authorize]
         [HttpPost]
-        [AllowAnonymous]
         public async Task<IActionResult> Post([FromBody] CriarProdutoDto dto)
         {
             
@@ -47,6 +47,7 @@ namespace EbenezerConnectApi.Controllers
             return CreatedAtAction(nameof(GetPorId), new { id = produto.Id },produtoDto);
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id, [FromBody] AtualizarProdutoDto dto)
         {
@@ -55,6 +56,7 @@ namespace EbenezerConnectApi.Controllers
             return atualizado ? NoContent() : NotFound();
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

@@ -174,6 +174,9 @@ namespace EbenezerConnectApi.Controllers
         [HttpPost("dev/confirm-email")]
         public async Task<IActionResult> DevConfirmEmail([FromQuery] string email)
         {
+            if (!_env.IsDevelopment())
+                return NotFound();
+
             var pessoa = await _pessoaRepository.BuscarPorEmail(email);
             if (pessoa == null)
                 return NotFound("Usuário não encontrado.");
@@ -189,6 +192,9 @@ namespace EbenezerConnectApi.Controllers
         [HttpPost("dev/create-admin")]
         public async Task<IActionResult> CreateAdminUser()
         {
+            if (!_env.IsDevelopment())
+                return NotFound();
+
             var adminExistente = await _pessoaRepository.BuscarPorEmail("gabrielbuenoalvesdev@gmail.com");
             
             if (adminExistente != null)
@@ -220,6 +226,9 @@ namespace EbenezerConnectApi.Controllers
         [HttpPost("dev/test-email")]
         public async Task<IActionResult> TestEmail([FromQuery] string email)
         {
+            if (!_env.IsDevelopment())
+                return NotFound();
+
             try
             {
                 _logger.LogInformation("🧪 Iniciando teste de envio de email...");
